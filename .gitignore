@@ -1,0 +1,31 @@
+# GSD / planning artifacts (local-only)
+.planning/
+.opencode/
+
+# Node / Angular
+node_modules/
+dist/
+build/
+.angular/
+coverage/
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
