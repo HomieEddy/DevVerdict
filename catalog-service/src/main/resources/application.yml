@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: catalog-service
+  datasource:
+    url: jdbc:postgresql://postgres-catalog:5432/catalog
+    username: devverdict
+    password: devverdict
+    hikari:
+      connection-timeout: 20000
+      initialization-fail-timeout: -1
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
