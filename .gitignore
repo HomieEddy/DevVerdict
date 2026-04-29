@@ -1,6 +1,7 @@
 # GSD / planning artifacts (local-only)
 .planning/
 .opencode/
+AGENTS.md
 
 # Node / Angular
 node_modules/
