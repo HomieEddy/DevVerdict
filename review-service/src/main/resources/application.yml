@@ -1,0 +1,31 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: review-service
+  datasource:
+    url: jdbc:postgresql://postgres-reviews:5432/reviews
+    username: ${DB_USER:devverdict}
+    password: ${DB_PASSWORD:devverdict}
+    hikari:
+      connection-timeout: 20000
+      initialization-fail-timeout: 60000
+  jpa:
+    hibernate:
+      ddl-auto: none
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      acks: all
+      retries: 3
+      enable-idempotence: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

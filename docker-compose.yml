@@ -1,0 +1,145 @@
+services:
+  postgres-catalog:
+    image: postgres:17.9-alpine
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_USER: devverdict
+      POSTGRES_PASSWORD: devverdict
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_catalog_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres-reviews:
+    image: postgres:17.9-alpine
+    environment:
+      POSTGRES_DB: reviews
+      POSTGRES_USER: devverdict
+      POSTGRES_PASSWORD: devverdict
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_reviews_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  kafka:
+    image: apache/kafka:3.9.2
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  init-kafka:
+    image: apache/kafka:3.9.2
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic review-updates --partitions 3 --replication-factor 1"]
+    restart: "no"
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: ./catalog-service/Dockerfile
+    # Host port not exposed — access only via Gateway at /api/catalog/**
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_USER: devverdict
+      DB_PASSWORD: devverdict
+    depends_on:
+      postgres-catalog:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  review-service:
+    build:
+      context: .
+      dockerfile: ./review-service/Dockerfile
+    # Host port not exposed — access only via Gateway at /api/reviews/**
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_USER: devverdict
+      DB_PASSWORD: devverdict
+    depends_on:
+      postgres-reviews:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: ./gateway/Dockerfile
+    ports:
+      - "8085:8080"
+    depends_on:
+      catalog-service:
+        condition: service_healthy
+      review-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  angular-ui:
+    build: ./devverdict-ui
+    ports:
+      - "4200:4200"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  pg_catalog_data:
+  pg_reviews_data:
+  kafka_data:
