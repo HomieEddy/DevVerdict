@@ -36,12 +36,13 @@ public class GatewayErrorWebExceptionHandler extends DefaultErrorWebExceptionHan
                 ErrorAttributeOptions.Include.EXCEPTION,
                 ErrorAttributeOptions.Include.STATUS));
 
-        HttpStatus status = getHttpStatus(error);
+        int statusValue = (int) error.getOrDefault("status", 500);
+        HttpStatus status = HttpStatus.valueOf(statusValue);
         String message = (String) error.getOrDefault("message", "Unknown error");
         String path = request.path();
 
         Map<String, Object> body = new HashMap<>();
-        body.put("status", status.value());
+        body.put("status", statusValue);
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
         body.put("path", path);
