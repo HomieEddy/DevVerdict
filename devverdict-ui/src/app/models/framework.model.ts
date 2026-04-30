@@ -4,4 +4,5 @@ export interface Framework {
   type: string;
   description: string;
   averageRating: number;
+  reviewCount: number;
 }
