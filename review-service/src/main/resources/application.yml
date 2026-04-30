@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: true  # Dev-only: disable in production
     properties:
       hibernate:
         format_sql: true
