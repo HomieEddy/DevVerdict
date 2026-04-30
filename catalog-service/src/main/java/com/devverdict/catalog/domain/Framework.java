@@ -27,6 +27,10 @@ public class Framework {
     @Column(nullable = false)
     private Double averageRating = 0.0;
 
+    @NotNull
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
+
     public Framework() {
     }
 
@@ -35,6 +39,7 @@ public class Framework {
         this.type = type;
         this.description = description;
         this.averageRating = averageRating;
+        this.reviewCount = 0;
     }
 
     public Long getId() {
@@ -75,5 +80,13 @@ public class Framework {
 
     public void setAverageRating(Double averageRating) {
         this.averageRating = averageRating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
     }
 }
