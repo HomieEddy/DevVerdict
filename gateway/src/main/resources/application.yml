@@ -31,14 +31,10 @@ spring:
           uri: lb://catalog-service
           predicates:
             - Path=/api/catalog/**
-          filters:
-            - StripPrefix=2
         - id: review-service
           uri: lb://review-service
           predicates:
             - Path=/api/reviews/**
-          filters:
-            - StripPrefix=2
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
