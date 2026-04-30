@@ -1,0 +1,19 @@
+@if (frameworksResource.isLoading()) {
+  <div class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading frameworks...</p>
+  </div>
+} @else if (frameworksResource.error()) {
+  <div class="error-container">
+    <p>Failed to load frameworks.</p>
+    <button (click)="showError('Could not connect to the catalog service. Please try again later.')">
+      Show Details
+    </button>
+  </div>
+} @else {
+  <div class="catalog-grid">
+    @for (framework of frameworksResource.value(); track framework.id) {
+      <app-framework-card [framework]="framework" />
+    }
+  </div>
+}
