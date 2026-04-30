@@ -34,7 +34,9 @@ public class ReviewService {
         Review review = new Review(
             request.frameworkId(),
             request.comment(),
-            request.rating()
+            request.rating(),
+            request.userId(),
+            request.username()
         );
 
         Review saved = reviewRepository.save(review);
@@ -59,9 +61,44 @@ public class ReviewService {
         return ReviewResponse.fromEntity(saved);
     }
 
+    @Transactional
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, Long userId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+
+        if (review.getUserId() == null || !review.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Not authorized to edit this review");
+        }
+
+        review.setComment(request.comment());
+        review.setRating(request.rating());
+        Review updated = reviewRepository.save(review);
+        return ReviewResponse.fromEntity(updated);
+    }
+
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+
+        if (review.getUserId() == null || !review.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Not authorized to delete this review");
+        }
+
+        reviewRepository.delete(review);
+    }
+
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByFramework(Long frameworkId) {
         return reviewRepository.findByFrameworkIdOrderByCreatedAtDesc(frameworkId)
+            .stream()
+            .map(ReviewResponse::fromEntity)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getReviewsByUser(Long userId) {
+        return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId)
             .stream()
             .map(ReviewResponse::fromEntity)
             .toList();

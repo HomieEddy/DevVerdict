@@ -10,4 +10,6 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByFrameworkIdOrderByCreatedAtDesc(Long frameworkId);
+
+    List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

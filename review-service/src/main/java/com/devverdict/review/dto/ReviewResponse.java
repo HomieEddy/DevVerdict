@@ -9,6 +9,8 @@ public record ReviewResponse(
     Long frameworkId,
     String comment,
     Integer rating,
+    Long userId,
+    String username,
     Instant createdAt
 ) {
 
@@ -18,6 +20,8 @@ public record ReviewResponse(
             review.getFrameworkId(),
             review.getComment(),
             review.getRating(),
+            review.getUserId(),
+            review.getUsername(),
             review.getCreatedAt()
         );
     }
