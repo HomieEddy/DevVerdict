@@ -14,7 +14,10 @@ spring:
               - GET
               - POST
               - OPTIONS
-            allowedHeaders: "*"
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+              - X-Requested-With
             allowCredentials: false
         add-to-simple-url-handler-mapping: true
       routes:
@@ -51,4 +54,4 @@ management:
         include: health,info,gateway
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized

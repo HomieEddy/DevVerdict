@@ -6,11 +6,11 @@ spring:
     name: review-service
   datasource:
     url: jdbc:postgresql://postgres-reviews:5432/reviews
-    username: devverdict
-    password: devverdict
+    username: ${DB_USER:devverdict}
+    password: ${DB_PASSWORD:devverdict}
     hikari:
       connection-timeout: 20000
-      initialization-fail-timeout: -1
+      initialization-fail-timeout: 60000
   jpa:
     hibernate:
       ddl-auto: none
@@ -28,4 +28,4 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
