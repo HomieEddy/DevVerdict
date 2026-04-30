@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-devverdict-jwt-secret-key-2026}
+
 spring:
   application:
     name: gateway
@@ -13,6 +17,8 @@ spring:
             allowedMethods:
               - GET
               - POST
+              - PUT
+              - DELETE
               - OPTIONS
             allowedHeaders:
               - Content-Type
@@ -35,19 +41,25 @@ spring:
           uri: lb://review-service
           predicates:
             - Path=/api/reviews/**
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
-    loadbalancer:
-      configurations: default
-    discovery:
-      client:
-        simple:
-          instances:
-            catalog-service:
-              - uri: http://catalog-service:8081
-            review-service:
-              - uri: http://review-service:8082
+      loadbalancer:
+        configurations: default
+      discovery:
+        client:
+          simple:
+            instances:
+              catalog-service:
+                - uri: http://catalog-service:8081
+              review-service:
+                - uri: http://review-service:8082
+              auth-service:
+                - uri: http://auth-service:8083
 
 management:
   endpoints:
