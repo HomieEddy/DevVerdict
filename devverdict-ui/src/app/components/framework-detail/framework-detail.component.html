@@ -55,53 +55,57 @@
         <mat-card-title>Write a Review</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="star-rating-input">
-          <span class="rating-label">Your Rating:</span>
-          @for (star of [1, 2, 3, 4, 5]; track star) {
-            <button
-              type="button"
-              class="star-btn"
-              [class.filled]="star <= (hoveredRating() || rating())"
-              (mouseenter)="setHoveredRating(star)"
-              (mouseleave)="setHoveredRating(0)"
-              (click)="setRating(star)"
+        @if (!isLoggedIn()) {
+          <p>Please <a routerLink="/login">log in</a> to submit a review.</p>
+        } @else {
+          <div class="star-rating-input">
+            <span class="rating-label">Your Rating:</span>
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <button
+                type="button"
+                class="star-btn"
+                [class.filled]="star <= (hoveredRating() || rating())"
+                (mouseenter)="setHoveredRating(star)"
+                (mouseleave)="setHoveredRating(0)"
+                (click)="setRating(star)"
+                [disabled]="isSubmitting()"
+              >
+                <mat-icon>
+                  {{ star <= (hoveredRating() || rating()) ? 'star' : 'star_border' }}
+                </mat-icon>
+              </button>
+            }
+            @if (rating() > 0) {
+              <span class="selected-rating">{{ rating() }} / 5</span>
+            }
+          </div>
+
+          <mat-form-field class="comment-field" appearance="outline">
+            <mat-label>Your Review</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="comment"
+              rows="4"
+              placeholder="Share your experience with this technology..."
+              maxlength="1000"
               [disabled]="isSubmitting()"
-            >
-              <mat-icon>
-                {{ star <= (hoveredRating() || rating()) ? 'star' : 'star_border' }}
-              </mat-icon>
-            </button>
-          }
-          @if (rating() > 0) {
-            <span class="selected-rating">{{ rating() }} / 5</span>
-          }
-        </div>
+            ></textarea>
+            <mat-hint align="end">{{ comment().length }} / 1000</mat-hint>
+          </mat-form-field>
 
-        <mat-form-field class="comment-field" appearance="outline">
-          <mat-label>Your Review</mat-label>
-          <textarea
-            matInput
-            [(ngModel)]="comment"
-            rows="4"
-            placeholder="Share your experience with this technology..."
-            maxlength="1000"
-            [disabled]="isSubmitting()"
-          ></textarea>
-          <mat-hint align="end">{{ comment().length }} / 1000</mat-hint>
-        </mat-form-field>
-
-        <button
-          mat-raised-button
-          color="primary"
-          class="submit-btn"
-          (click)="submitReview()"
-          [disabled]="isSubmitting() || rating() < 1 || comment().trim().length === 0"
-        >
-          <mat-icon [class.spin]="isSubmitting()">
-            {{ isSubmitting() ? 'refresh' : 'send' }}
-          </mat-icon>
-          {{ isSubmitting() ? 'Submitting...' : 'Submit Review' }}
-        </button>
+          <button
+            mat-raised-button
+            color="primary"
+            class="submit-btn"
+            (click)="submitReview()"
+            [disabled]="isSubmitting() || rating() < 1 || comment().trim().length === 0"
+          >
+            <mat-icon [class.spin]="isSubmitting()">
+              {{ isSubmitting() ? 'refresh' : 'send' }}
+            </mat-icon>
+            {{ isSubmitting() ? 'Submitting...' : 'Submit Review' }}
+          </button>
+        }
       </mat-card-content>
     </mat-card>
 
@@ -129,7 +133,17 @@
                       </mat-icon>
                     }
                   </div>
-                  <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                  <div class="review-meta">
+                    @if (review.username) {
+                      <span class="review-author">{{ review.username }}</span>
+                    }
+                    <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+                    @if (canEditReview(review)) {
+                      <button mat-icon-button color="warn" (click)="deleteReview(review.id)" title="Delete review">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </div>
                 </div>
                 <p class="review-comment">{{ review.comment }}</p>
                 @if (!$last) {
