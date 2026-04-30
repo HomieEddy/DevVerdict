@@ -1,0 +1,52 @@
+@if (frameworkResource.isLoading()) {
+  <div class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading framework details...</p>
+  </div>
+} @else if (frameworkResource.error()) {
+  <div class="error-container">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <p>Framework not found or unavailable.</p>
+    <a mat-stroked-button routerLink="/">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Catalog
+    </a>
+  </div>
+} @else {
+  @let framework = frameworkResource.value();
+  <div class="detail-container">
+    <a mat-button routerLink="/" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Catalog
+    </a>
+
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title class="framework-name">{{ framework?.name }}</mat-card-title>
+        <mat-card-subtitle>
+          <mat-chip-set>
+            <mat-chip [color]="getTypeColor(framework?.type || '')" highlighted>
+              {{ framework?.type }}
+            </mat-chip>
+          </mat-chip-set>
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="rating-large">
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <mat-icon [class.filled]="star <= (framework?.averageRating || 0)">
+              {{ star <= (framework?.averageRating || 0) ? 'star' : 'star_border' }}
+            </mat-icon>
+          }
+          <span class="rating-value">{{ framework?.averageRating }} / 5</span>
+        </div>
+
+        <div class="description-section">
+          <h3>About</h3>
+          <p class="description">{{ framework?.description }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+}
