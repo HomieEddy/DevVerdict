@@ -26,6 +26,7 @@
     <modules>
         <module>catalog-service</module>
         <module>review-service</module>
+        <module>auth-service</module>
         <module>gateway</module>
     </modules>
 
