@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://gateway:8085",
+    "target": "http://gateway:8080",
     "changeOrigin": true
   }
 }
