@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ReviewService {
@@ -40,6 +41,7 @@ public class ReviewService {
         logger.info("Saved review id={} for framework id={}", saved.getId(), saved.getFrameworkId());
 
         ReviewCreatedEvent event = new ReviewCreatedEvent(
+            UUID.randomUUID(),
             saved.getId(),
             saved.getFrameworkId(),
             saved.getRating(),
@@ -47,17 +49,10 @@ public class ReviewService {
         );
 
         try {
-            kafkaTemplate.send(TOPIC, saved.getFrameworkId().toString(), event)
-                .whenComplete((result, ex) -> {
-                    if (ex != null) {
-                        logger.error("Failed to publish ReviewCreated event for review id={}", saved.getId(), ex);
-                    } else {
-                        logger.info("Published ReviewCreated event for review id={} to topic={}",
-                            saved.getId(), result.getRecordMetadata().topic());
-                    }
-                });
+            kafkaTemplate.send(TOPIC, saved.getFrameworkId().toString(), event).get();
+            logger.info("Published ReviewCreated event id={} for review id={}", event.eventId(), saved.getId());
         } catch (Exception ex) {
-            logger.error("Exception while sending Kafka message for review id={}", saved.getId(), ex);
+            logger.error("Failed to publish ReviewCreated event for review id={}", saved.getId(), ex);
             throw new ReviewPublishException("Review saved but event publication failed", ex);
         }
 
