@@ -20,4 +20,18 @@ export class ReviewService {
   async createReview(request: CreateReviewRequest): Promise<Review> {
     return lastValueFrom(this.http.post<Review>(this.apiUrl, request));
   }
+
+  async updateReview(id: number, request: CreateReviewRequest): Promise<Review> {
+    return lastValueFrom(this.http.put<Review>(`${this.apiUrl}/${id}`, request));
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    return lastValueFrom(this.http.delete<void>(`${this.apiUrl}/${id}`));
+  }
+
+  getReviewsByUser(userId: number) {
+    return resource({
+      loader: () => lastValueFrom(this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`))
+    });
+  }
 }
