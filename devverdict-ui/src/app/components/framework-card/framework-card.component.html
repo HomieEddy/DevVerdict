@@ -1,0 +1,24 @@
+<mat-card class="framework-card" [routerLink]="['/framework', framework().id]">
+  <mat-card-header>
+    <mat-card-title>{{ framework().name }}</mat-card-title>
+    <mat-card-subtitle>
+      <mat-chip-set>
+        <mat-chip [color]="getTypeColor(framework().type)" highlighted>
+          {{ framework().type }}
+        </mat-chip>
+      </mat-chip-set>
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="rating">
+      @for (star of [1, 2, 3, 4, 5]; track star) {
+        <mat-icon [class.filled]="star <= framework().averageRating">
+          {{ star <= framework().averageRating ? 'star' : 'star_border' }}
+        </mat-icon>
+      }
+      <span class="rating-value">{{ framework().averageRating }}</span>
+    </div>
+    <p class="description">{{ framework().description }}</p>
+  </mat-card-content>
+</mat-card>
