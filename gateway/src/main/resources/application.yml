@@ -20,21 +20,19 @@ spring:
               - X-Requested-With
             allowCredentials: false
         add-to-simple-url-handler-mapping: true
-      default-filters:
-        - name: Retry
-          args:
-            retries: 3
-            statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,INTERNAL_SERVER_ERROR
-            methods: GET,POST
       routes:
         - id: catalog-service
           uri: lb://catalog-service
           predicates:
             - Path=/api/catalog/**
+          filters:
+            - StripPrefix=2
         - id: review-service
           uri: lb://review-service
           predicates:
             - Path=/api/reviews/**
+          filters:
+            - StripPrefix=2
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
