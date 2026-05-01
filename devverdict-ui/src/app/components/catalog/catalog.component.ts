@@ -38,13 +38,12 @@ export class CatalogComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
 
   readonly searchTerm = signal('');
-  readonly selectedType = signal<string | null>(null);
+  readonly selectedType = signal<string>('');
   readonly minRating = signal<number | null>(null);
   readonly availableTypes = ['Language', 'Framework', 'Runtime', 'Library', 'Tool'];
 
   private readonly searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
-  private queryParamSubscription?: Subscription;
 
   frameworksResource = this.frameworkService.getAllFrameworks();
 
@@ -59,31 +58,32 @@ export class CatalogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.queryParamSubscription = this.route.queryParams.subscribe(params => {
-      const name = params['search'] || '';
-      const type = params['type'] || null;
-      const rating = params['minRating'] ? parseFloat(params['minRating']) : null;
+    const params = this.route.snapshot.queryParams;
+    const name = params['search'] || '';
+    const type = params['type'] || '';
+    const rating = params['minRating'] ? parseFloat(params['minRating']) : null;
 
-      this.searchTerm.set(name);
-      this.selectedType.set(type);
-      this.minRating.set(rating);
+    this.searchTerm.set(name);
+    this.selectedType.set(type);
+    this.minRating.set(rating);
 
-      if (name || type || rating !== null) {
-        this.frameworksResource = this.frameworkService.searchFrameworks(name || undefined, type || undefined, rating);
-      }
-    });
+    if (name || type || rating !== null) {
+      this.frameworksResource = this.frameworkService.searchFrameworks(
+        name || undefined, type || undefined, rating
+      );
+    }
   }
 
   ngOnDestroy() {
     this.searchSubscription?.unsubscribe();
-    this.queryParamSubscription?.unsubscribe();
+    this.searchSubject.complete();
   }
 
   onSearchChange(value: string): void {
     this.searchSubject.next(value);
   }
 
-  onTypeChange(value: string | null): void {
+  onTypeChange(value: string): void {
     this.selectedType.set(value);
     this.performSearch();
   }
@@ -100,7 +100,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   clearFilters(): void {
     this.searchTerm.set('');
-    this.selectedType.set(null);
+    this.selectedType.set('');
     this.minRating.set(null);
     this.frameworksResource = this.frameworkService.getAllFrameworks();
     this.router.navigate([], { queryParams: {} });
