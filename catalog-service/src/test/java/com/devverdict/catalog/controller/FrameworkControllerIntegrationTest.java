@@ -168,4 +168,82 @@ class FrameworkControllerIntegrationTest {
                         .header("X-User-Role", "ADMIN"))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void shouldSearchFrameworksByName() throws Exception {
+        frameworkRepository.save(new Framework("Spring Boot", "Framework", "Java framework", 4.5));
+        frameworkRepository.save(new Framework("React", "Framework", "JS library", 4.2));
+        frameworkRepository.save(new Framework("Python", "Language", "Programming language", 4.8));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search").param("name", "react"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("React")));
+    }
+
+    @Test
+    void shouldSearchFrameworksByNameCaseInsensitive() throws Exception {
+        frameworkRepository.save(new Framework("Angular", "Framework", "Google framework", 4.2));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search").param("name", "ANGULAR"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("Angular")));
+    }
+
+    @Test
+    void shouldFilterFrameworksByType() throws Exception {
+        frameworkRepository.save(new Framework("Spring Boot", "Framework", "Java framework", 4.5));
+        frameworkRepository.save(new Framework("Python", "Language", "Programming language", 4.8));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search").param("type", "Language"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("Python")));
+    }
+
+    @Test
+    void shouldFilterFrameworksByMinRating() throws Exception {
+        frameworkRepository.save(new Framework("LowRated", "Framework", "Desc", 2.0));
+        frameworkRepository.save(new Framework("HighRated", "Framework", "Desc", 4.5));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search").param("minRating", "3.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("HighRated")));
+    }
+
+    @Test
+    void shouldSearchWithCombinedFilters() throws Exception {
+        frameworkRepository.save(new Framework("Spring Boot", "Framework", "Java framework", 4.5));
+        frameworkRepository.save(new Framework("React", "Framework", "JS library", 3.5));
+        frameworkRepository.save(new Framework("Python", "Language", "Programming language", 4.8));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search")
+                        .param("name", "boot")
+                        .param("type", "Framework")
+                        .param("minRating", "4.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("Spring Boot")));
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoSearchMatches() throws Exception {
+        frameworkRepository.save(new Framework("Angular", "Framework", "Google framework", 4.2));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search").param("name", "nonexistent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void shouldReturnAllFrameworksWhenNoSearchParams() throws Exception {
+        frameworkRepository.save(new Framework("Angular", "Framework", "Google framework", 4.2));
+        frameworkRepository.save(new Framework("React", "Framework", "JS library", 4.2));
+
+        mockMvc.perform(get("/api/catalog/frameworks/search"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
 }
