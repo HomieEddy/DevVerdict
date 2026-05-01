@@ -30,14 +30,19 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+        String method = exchange.getRequest().getMethod().name();
 
         // Public routes — no JWT required
         if (path.startsWith("/api/auth/") || path.startsWith("/api/catalog/")) {
             return chain.filter(exchange);
         }
 
-        // Protected routes — validate JWT
+        // Reviews: read operations are public, write operations require JWT
         if (path.startsWith("/api/reviews/")) {
+            if ("GET".equals(method)) {
+                return chain.filter(exchange);
+            }
+
             String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
