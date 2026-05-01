@@ -32,6 +32,18 @@ public class Review {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "pros", length = 500)
+    private String pros;
+
+    @Column(name = "cons", length = 500)
+    private String cons;
+
+    @Column(name = "helpful_votes", nullable = false)
+    private Integer helpfulVotes = 0;
+
+    @Column(name = "not_helpful_votes", nullable = false)
+    private Integer notHelpfulVotes = 0;
+
     public Review() {
     }
 
@@ -39,6 +51,8 @@ public class Review {
         this.frameworkId = frameworkId;
         this.comment = comment;
         this.rating = rating;
+        this.helpfulVotes = 0;
+        this.notHelpfulVotes = 0;
         this.createdAt = Instant.now();
     }
 
@@ -48,6 +62,21 @@ public class Review {
         this.rating = rating;
         this.userId = userId;
         this.username = username;
+        this.helpfulVotes = 0;
+        this.notHelpfulVotes = 0;
+        this.createdAt = Instant.now();
+    }
+
+    public Review(Long frameworkId, String comment, Integer rating, Long userId, String username, String pros, String cons) {
+        this.frameworkId = frameworkId;
+        this.comment = comment;
+        this.rating = rating;
+        this.userId = userId;
+        this.username = username;
+        this.pros = pros;
+        this.cons = cons;
+        this.helpfulVotes = 0;
+        this.notHelpfulVotes = 0;
         this.createdAt = Instant.now();
     }
 
@@ -120,5 +149,53 @@ public class Review {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getPros() {
+        return pros;
+    }
+
+    public void setPros(String pros) {
+        this.pros = pros;
+    }
+
+    public String getCons() {
+        return cons;
+    }
+
+    public void setCons(String cons) {
+        this.cons = cons;
+    }
+
+    public Integer getHelpfulVotes() {
+        return helpfulVotes;
+    }
+
+    public void setHelpfulVotes(Integer helpfulVotes) {
+        this.helpfulVotes = helpfulVotes;
+    }
+
+    public Integer getNotHelpfulVotes() {
+        return notHelpfulVotes;
+    }
+
+    public void setNotHelpfulVotes(Integer notHelpfulVotes) {
+        this.notHelpfulVotes = notHelpfulVotes;
+    }
+
+    public void incrementHelpfulVotes() {
+        this.helpfulVotes++;
+    }
+
+    public void decrementHelpfulVotes() {
+        this.helpfulVotes = Math.max(0, this.helpfulVotes - 1);
+    }
+
+    public void incrementNotHelpfulVotes() {
+        this.notHelpfulVotes++;
+    }
+
+    public void decrementNotHelpfulVotes() {
+        this.notHelpfulVotes = Math.max(0, this.notHelpfulVotes - 1);
     }
 }
