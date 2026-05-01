@@ -21,6 +21,7 @@ import { AuthService } from '../../services/auth.service';
 export class NavbarComponent {
   isLoggedIn = computed(() => this.authService.isAuthenticated());
   username = computed(() => this.authService.currentUser()?.username || '');
+  isAdmin = computed(() => this.authService.currentUser()?.role === 'ADMIN');
 
   constructor(private authService: AuthService, private router: Router) {}
 
