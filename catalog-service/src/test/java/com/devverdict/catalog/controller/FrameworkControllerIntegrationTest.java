@@ -16,7 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -84,5 +84,88 @@ class FrameworkControllerIntegrationTest {
     void shouldReturn404WhenFrameworkNotFound() throws Exception {
         mockMvc.perform(get("/api/catalog/frameworks/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldCreateFrameworkWhenAdmin() throws Exception {
+        mockMvc.perform(post("/api/catalog/frameworks")
+                        .header("X-User-Role", "ADMIN")
+                        .contentType("application/json")
+                        .content("""
+                                {"name":"Vue","type":"Framework","description":"Progressive JS framework","averageRating":4.3}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name", is("Vue")))
+                .andExpect(jsonPath("$.type", is("Framework")))
+                .andExpect(jsonPath("$.averageRating", is(4.3)));
+    }
+
+    @Test
+    void shouldRejectFrameworkCreationWhenNotAdmin() throws Exception {
+        mockMvc.perform(post("/api/catalog/frameworks")
+                        .header("X-User-Role", "USER")
+                        .contentType("application/json")
+                        .content("""
+                                {"name":"Vue","type":"Framework","description":"Progressive JS framework","averageRating":4.3}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldUpdateFrameworkWhenAdmin() throws Exception {
+        Framework framework = frameworkRepository.save(new Framework("Old", "Framework", "Old desc", 3.0));
+
+        mockMvc.perform(put("/api/catalog/frameworks/{id}", framework.getId())
+                        .header("X-User-Role", "ADMIN")
+                        .contentType("application/json")
+                        .content("""
+                                {"name":"Updated","type":"Library","description":"Updated desc","averageRating":4.0}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Updated")))
+                .andExpect(jsonPath("$.type", is("Library")))
+                .andExpect(jsonPath("$.averageRating", is(4.0)));
+    }
+
+    @Test
+    void shouldRejectFrameworkUpdateWhenNotAdmin() throws Exception {
+        Framework framework = frameworkRepository.save(new Framework("Old", "Framework", "Old desc", 3.0));
+
+        mockMvc.perform(put("/api/catalog/frameworks/{id}", framework.getId())
+                        .header("X-User-Role", "USER")
+                        .contentType("application/json")
+                        .content("""
+                                {"name":"Updated","type":"Library","description":"Updated desc","averageRating":4.0}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldDeleteFrameworkWhenAdmin() throws Exception {
+        Framework framework = frameworkRepository.save(new Framework("DeleteMe", "Framework", "Desc", 3.0));
+
+        mockMvc.perform(delete("/api/catalog/frameworks/{id}", framework.getId())
+                        .header("X-User-Role", "ADMIN"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldRejectFrameworkDeleteWhenNotAdmin() throws Exception {
+        Framework framework = frameworkRepository.save(new Framework("DeleteMe", "Framework", "Desc", 3.0));
+
+        mockMvc.perform(delete("/api/catalog/frameworks/{id}", framework.getId())
+                        .header("X-User-Role", "USER"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldReturnConflictWhenDeletingFrameworkWithReviews() throws Exception {
+        Framework framework = new Framework("WithReviews", "Framework", "Desc", 3.0);
+        framework.setReviewCount(5);
+        framework = frameworkRepository.save(framework);
+
+        mockMvc.perform(delete("/api/catalog/frameworks/{id}", framework.getId())
+                        .header("X-User-Role", "ADMIN"))
+                .andExpect(status().isConflict());
     }
 }
