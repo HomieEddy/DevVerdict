@@ -20,11 +20,7 @@ public interface FrameworkRepository extends JpaRepository<Framework, Long> {
            "WHERE (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
            "AND (:type IS NULL OR f.type = :type) " +
            "AND (:minRating IS NULL OR f.averageRating >= :minRating) " +
-           "ORDER BY CASE " +
-           "  WHEN :name IS NOT NULL AND LOWER(f.name) = LOWER(:name) THEN 0 " +
-           "  WHEN :name IS NOT NULL AND LOWER(f.name) LIKE LOWER(CONCAT(:name, '%')) THEN 1 " +
-           "  ELSE 2 " +
-           "END, f.name")
+           "ORDER BY f.name")
     List<Framework> searchFrameworks(
             @Param("name") String name,
             @Param("type") String type,
