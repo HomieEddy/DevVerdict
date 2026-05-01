@@ -12,6 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import reactor.core.publisher.Mono;
 
 import java.util.stream.Collectors;
 
@@ -40,5 +45,20 @@ public class GatewayConfig {
         exceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
         exceptionHandler.setMessageReaders(serverCodecConfigurer.getReaders());
         return exceptionHandler;
+    }
+
+    @Bean
+    public KeyResolver ipKeyResolver() {
+        return exchange -> {
+            String ip = exchange.getRequest().getRemoteAddress() != null
+                    ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
+                    : "unknown";
+            return Mono.just(ip);
+        };
+    }
+
+    @Bean
+    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory connectionFactory) {
+        return new ReactiveRedisTemplate<>(connectionFactory, RedisSerializationContext.string());
     }
 }

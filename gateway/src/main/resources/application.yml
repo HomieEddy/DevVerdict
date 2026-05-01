@@ -8,8 +8,20 @@ app:
 spring:
   application:
     name: gateway
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2000ms
   cloud:
     gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 5
+            redis-rate-limiter.burstCapacity: 10
+            redis-rate-limiter.requestedTokens: 1
+            key-resolver: "#{@ipKeyResolver}"
       globalcors:
         cors-configurations:
           '[/**]':
@@ -31,17 +43,61 @@ spring:
           uri: http://catalog-service:8081
           predicates:
             - Path=/api/catalog/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: catalog-service
+                fallbackUri: forward:/fallback
         - id: review-service
           uri: http://review-service:8082
           predicates:
             - Path=/api/reviews/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: review-service
+                fallbackUri: forward:/fallback
         - id: auth-service
           uri: http://auth-service:8083
           predicates:
             - Path=/api/auth/**,/api/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: auth-service
+                fallbackUri: forward:/fallback
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        slowCallDurationThreshold: 3s
+        slowCallRateThreshold: 80
+    instances:
+      catalog-service:
+        baseConfig: default
+      review-service:
+        baseConfig: default
+      auth-service:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+    instances:
+      catalog-service:
+        baseConfig: default
+      review-service:
+        baseConfig: default
+      auth-service:
+        baseConfig: default
 
 management:
   endpoints:

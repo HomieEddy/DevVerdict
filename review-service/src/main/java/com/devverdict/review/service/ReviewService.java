@@ -1,13 +1,15 @@
 package com.devverdict.review.service;
 
+import com.devverdict.review.domain.OutboxEvent;
 import com.devverdict.review.domain.Review;
 import com.devverdict.review.dto.ReviewCreatedEvent;
 import com.devverdict.review.dto.ReviewRequest;
 import com.devverdict.review.dto.ReviewResponse;
+import com.devverdict.review.repository.OutboxEventRepository;
 import com.devverdict.review.repository.ReviewRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +23,15 @@ public class ReviewService {
     private static final String TOPIC = "review-updates";
 
     private final ReviewRepository reviewRepository;
-    private final KafkaTemplate<String, ReviewCreatedEvent> kafkaTemplate;
+    private final OutboxEventRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     public ReviewService(ReviewRepository reviewRepository,
-                         KafkaTemplate<String, ReviewCreatedEvent> kafkaTemplate) {
+                         OutboxEventRepository outboxRepository,
+                         ObjectMapper objectMapper) {
         this.reviewRepository = reviewRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -51,11 +56,17 @@ public class ReviewService {
         );
 
         try {
-            kafkaTemplate.send(TOPIC, saved.getFrameworkId().toString(), event).get();
-            logger.info("Published ReviewCreated event id={} for review id={}", event.eventId(), saved.getId());
+            String payload = objectMapper.writeValueAsString(event);
+            OutboxEvent outbox = new OutboxEvent(
+                "ReviewCreated",
+                saved.getFrameworkId().toString(),
+                payload
+            );
+            outboxRepository.save(outbox);
+            logger.info("Enqueued ReviewCreated event id={} for review id={} in outbox", event.eventId(), saved.getId());
         } catch (Exception ex) {
-            logger.error("Failed to publish ReviewCreated event for review id={}", saved.getId(), ex);
-            throw new ReviewPublishException("Review saved but event publication failed", ex);
+            logger.error("Failed to enqueue ReviewCreated event for review id={}", saved.getId(), ex);
+            throw new ReviewPublishException("Review saved but outbox enqueue failed", ex);
         }
 
         return ReviewResponse.fromEntity(saved);
