@@ -33,6 +33,14 @@ public class FrameworkController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/search")
+    public List<Framework> searchFrameworks(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Double minRating) {
+        return frameworkRepository.searchFrameworks(name, type, minRating);
+    }
+
     @PostMapping
     public ResponseEntity<Framework> createFramework(
             @Valid @RequestBody FrameworkRequest request,
