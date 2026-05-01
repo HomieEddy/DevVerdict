@@ -30,12 +30,12 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse createReview(ReviewRequest request) {
+    public ReviewResponse createReview(ReviewRequest request, Long authenticatedUserId) {
         Review review = new Review(
             request.frameworkId(),
             request.comment(),
             request.rating(),
-            request.userId(),
+            authenticatedUserId,
             request.username()
         );
 

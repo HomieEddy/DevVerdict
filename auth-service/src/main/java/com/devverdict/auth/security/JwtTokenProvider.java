@@ -50,6 +50,11 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
+    public String getEmailFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("email", String.class);
+    }
+
     public String getUsernameFromToken(String token) {
         Claims claims = parseClaims(token);
         return claims.get("username", String.class);

@@ -41,7 +41,7 @@ export class AuthService {
   }
 
   loadCurrentUser(): void {
-    this.http.get<User>(`${this.apiUrl}/me`).subscribe({
+    this.http.get<User>(`/api/users/me`).subscribe({
       next: (user) => {
         this.currentUser.set(user);
         this.isAuthenticated.set(true);

@@ -32,6 +32,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper(request);
 
+        // Strip any incoming internal headers to prevent header forgery
+        wrappedRequest.removeHeader("X-User-Id");
+        wrappedRequest.removeHeader("X-User-Role");
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {

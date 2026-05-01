@@ -8,6 +8,7 @@ import java.util.*;
 public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
 
     private final Map<String, String> customHeaders = new HashMap<>();
+    private final Set<String> removedHeaders = new HashSet<>();
 
     public HeaderMapRequestWrapper(HttpServletRequest request) {
         super(request);
@@ -17,8 +18,15 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
         customHeaders.put(name, value);
     }
 
+    public void removeHeader(String name) {
+        removedHeaders.add(name);
+    }
+
     @Override
     public String getHeader(String name) {
+        if (removedHeaders.contains(name)) {
+            return null;
+        }
         String headerValue = customHeaders.get(name);
         if (headerValue != null) {
             return headerValue;
@@ -28,6 +36,9 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public Enumeration<String> getHeaders(String name) {
+        if (removedHeaders.contains(name)) {
+            return Collections.emptyEnumeration();
+        }
         if (customHeaders.containsKey(name)) {
             return Collections.enumeration(List.of(customHeaders.get(name)));
         }
@@ -37,6 +48,7 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
     @Override
     public Enumeration<String> getHeaderNames() {
         Set<String> names = new HashSet<>(Collections.list(super.getHeaderNames()));
+        names.removeAll(removedHeaders);
         names.addAll(customHeaders.keySet());
         return Collections.enumeration(names);
     }

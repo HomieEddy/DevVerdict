@@ -28,7 +28,7 @@ public class ReviewController {
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        ReviewResponse response = reviewService.createReview(request);
+        ReviewResponse response = reviewService.createReview(request, userId);
         return ResponseEntity.created(URI.create("/api/reviews/" + response.id())).body(response);
     }
 
