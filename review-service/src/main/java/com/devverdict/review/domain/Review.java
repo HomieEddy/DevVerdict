@@ -26,6 +26,9 @@ public class Review {
     @Column(name = "username", length = 50)
     private String username;
 
+    @Column(name = "hidden", nullable = false)
+    private Boolean hidden = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -101,6 +104,14 @@ public class Review {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
     }
 
     public Instant getCreatedAt() {

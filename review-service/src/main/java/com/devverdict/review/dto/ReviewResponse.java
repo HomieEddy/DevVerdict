@@ -11,6 +11,7 @@ public record ReviewResponse(
     Integer rating,
     Long userId,
     String username,
+    Boolean hidden,
     Instant createdAt
 ) {
 
@@ -22,6 +23,7 @@ public record ReviewResponse(
             review.getRating(),
             review.getUserId(),
             review.getUsername(),
+            review.getHidden(),
             review.getCreatedAt()
         );
     }

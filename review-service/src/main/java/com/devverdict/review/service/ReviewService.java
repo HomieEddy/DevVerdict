@@ -101,7 +101,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByFramework(Long frameworkId) {
-        return reviewRepository.findByFrameworkIdOrderByCreatedAtDesc(frameworkId)
+        return reviewRepository.findByFrameworkIdAndHiddenFalseOrderByCreatedAtDesc(frameworkId)
             .stream()
             .map(ReviewResponse::fromEntity)
             .toList();
@@ -109,9 +109,27 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByUser(Long userId) {
-        return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId)
+        return reviewRepository.findByUserIdAndHiddenFalseOrderByCreatedAtDesc(userId)
             .stream()
             .map(ReviewResponse::fromEntity)
             .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getAllReviewsForModeration() {
+        return reviewRepository.findAllByOrderByCreatedAtDesc()
+            .stream()
+            .map(ReviewResponse::fromEntity)
+            .toList();
+    }
+
+    @Transactional
+    public ReviewResponse moderateReview(Long reviewId, boolean hidden) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        review.setHidden(hidden);
+        Review updated = reviewRepository.save(review);
+        logger.info("Moderated review id={}, hidden={}", reviewId, hidden);
+        return ReviewResponse.fromEntity(updated);
     }
 }

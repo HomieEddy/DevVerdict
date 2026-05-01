@@ -67,6 +67,34 @@ public class ReviewController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/moderation")
+    public ResponseEntity<List<ReviewResponse>> getAllReviewsForModeration(
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (!isAdmin(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(reviewService.getAllReviewsForModeration());
+    }
+
+    @PatchMapping("/{id}/moderate")
+    public ResponseEntity<ReviewResponse> moderateReview(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> body,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (!isAdmin(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        Boolean hidden = body.get("hidden");
+        if (hidden == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(reviewService.moderateReview(id, hidden));
+    }
+
+    private boolean isAdmin(String role) {
+        return "ADMIN".equals(role);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
