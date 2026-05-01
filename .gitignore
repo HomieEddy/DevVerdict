@@ -33,3 +33,6 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Temporary test scripts
+verify_fixes.py
