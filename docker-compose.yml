@@ -74,6 +74,19 @@ services:
       retries: 5
       start_period: 60s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   init-kafka:
     image: apache/kafka:3.9.2
     depends_on:
@@ -157,6 +170,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -183,3 +198,4 @@ volumes:
   pg_catalog_data:
   pg_reviews_data:
   kafka_data:
+  redis_data:
