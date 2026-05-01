@@ -27,7 +27,7 @@
 
     <mat-chip-listbox aria-label="Framework type filter"
                       [value]="selectedType()"
-                      (change)="onTypeChange($event.value)">
+                      (selectionChange)="onTypeChange($event.value)">
       <mat-chip-option value="">All</mat-chip-option>
       @for (t of availableTypes; track t) {
         <mat-chip-option [value]="t">{{ t }}</mat-chip-option>
@@ -39,7 +39,7 @@
       <mat-slider min="0" max="5" step="0.5" discrete>
         <input matSliderThumb
                [value]="minRating() ?? 0"
-               (valueChange)="onRatingChange($event)">
+               (change)="onRatingChange($event)">
       </mat-slider>
     </div>
 

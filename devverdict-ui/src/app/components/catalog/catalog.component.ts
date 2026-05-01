@@ -117,13 +117,15 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
     this.frameworksResource = this.frameworkService.searchFrameworks(name, type, rating ?? undefined);
 
+    const queryParams: any = {};
+    if (name) queryParams.search = name;
+    if (type) queryParams.type = type;
+    if (rating !== null && rating !== undefined) queryParams.minRating = rating;
+
     this.router.navigate([], {
-      queryParams: {
-        search: name || null,
-        type: type || null,
-        minRating: rating !== null ? rating : null
-      },
-      queryParamsHandling: 'merge'
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
     });
   }
 
