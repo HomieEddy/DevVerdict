@@ -26,6 +26,20 @@ public class FrameworkController {
         return frameworkRepository.findAll();
     }
 
+    @GetMapping("/search")
+    public List<Framework> searchFrameworks(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Double minRating) {
+        String namePattern = (name != null && !name.isBlank()) ? "%" + name.toLowerCase() + "%" : null;
+        return frameworkRepository.searchFrameworks(namePattern, type, minRating);
+    }
+
+    @GetMapping("/types")
+    public List<String> getFrameworkTypes() {
+        return frameworkRepository.findDistinctTypes();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Framework> getFrameworkById(@PathVariable Long id) {
         return frameworkRepository.findById(id)

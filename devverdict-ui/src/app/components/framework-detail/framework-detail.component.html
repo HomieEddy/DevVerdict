@@ -20,6 +20,13 @@
       Back to Catalog
     </a>
 
+    @if (lastUpdated()) {
+      <div class="last-updated">
+        <mat-icon class="update-icon">refresh</mat-icon>
+        <span>Updated {{ formatTimeAgo(lastUpdated()!) }}</span>
+      </div>
+    }
+
     <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title class="framework-name">{{ framework?.name }}</mat-card-title>

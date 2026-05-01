@@ -7,10 +7,25 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface FrameworkRepository extends JpaRepository<Framework, Long> {
 
     @Modifying
     @Query("UPDATE Framework f SET f.averageRating = (f.averageRating * f.reviewCount + :rating) / (f.reviewCount + 1), f.reviewCount = f.reviewCount + 1 WHERE f.id = :frameworkId")
     int updateAverageRating(@Param("frameworkId") Long frameworkId, @Param("rating") Integer rating);
+
+    @Query("SELECT f FROM Framework f " +
+           "WHERE (:name IS NULL OR LOWER(f.name) LIKE :name) " +
+           "AND (:type IS NULL OR f.type = :type) " +
+           "AND (:minRating IS NULL OR f.averageRating >= :minRating) " +
+           "ORDER BY f.name")
+    List<Framework> searchFrameworks(
+            @Param("name") String name,
+            @Param("type") String type,
+            @Param("minRating") Double minRating);
+
+    @Query("SELECT DISTINCT f.type FROM Framework f ORDER BY f.type")
+    List<String> findDistinctTypes();
 }

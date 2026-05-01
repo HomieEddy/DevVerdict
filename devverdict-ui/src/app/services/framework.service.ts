@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { resource } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { Framework } from '../models/framework.model';
@@ -44,5 +44,29 @@ export class FrameworkService {
 
   async deleteFramework(id: number): Promise<void> {
     return lastValueFrom(this.http.delete<void>(`${this.apiUrl}/${id}`));
+  }
+
+  searchFrameworks(name?: string, type?: string, minRating?: number | null) {
+    let params = new HttpParams();
+    if (name) params = params.set('name', name);
+    if (type) params = params.set('type', type);
+    if (minRating !== undefined && minRating !== null) params = params.set('minRating', minRating.toString());
+
+    return resource({
+      loader: () => lastValueFrom(this.http.get<Framework[]>(`${this.apiUrl}/search`, { params }))
+    });
+  }
+
+  fetchSearchResults(name?: string, type?: string, minRating?: number | null): Promise<Framework[]> {
+    let params = new HttpParams();
+    if (name) params = params.set('name', name);
+    if (type) params = params.set('type', type);
+    if (minRating !== undefined && minRating !== null) params = params.set('minRating', minRating.toString());
+
+    return lastValueFrom(this.http.get<Framework[]>(`${this.apiUrl}/search`, { params }));
+  }
+
+  fetchFrameworkTypes(): Promise<string[]> {
+    return lastValueFrom(this.http.get<string[]>(`${this.apiUrl}/types`));
   }
 }
