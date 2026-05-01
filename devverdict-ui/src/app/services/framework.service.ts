@@ -65,4 +65,8 @@ export class FrameworkService {
 
     return lastValueFrom(this.http.get<Framework[]>(`${this.apiUrl}/search`, { params }));
   }
+
+  fetchFrameworkTypes(): Promise<string[]> {
+    return lastValueFrom(this.http.get<string[]>(`${this.apiUrl}/types`));
+  }
 }

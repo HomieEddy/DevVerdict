@@ -246,4 +246,17 @@ class FrameworkControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
+
+    @Test
+    void shouldReturnDistinctFrameworkTypes() throws Exception {
+        frameworkRepository.save(new Framework("Spring Boot", "Framework", "Java framework", 4.5));
+        frameworkRepository.save(new Framework("Python", "Language", "Programming language", 4.8));
+        frameworkRepository.save(new Framework("React", "Framework", "JS library", 4.2));
+
+        mockMvc.perform(get("/api/catalog/frameworks/types"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0]", is("Framework")))
+                .andExpect(jsonPath("$[1]", is("Language")));
+    }
 }

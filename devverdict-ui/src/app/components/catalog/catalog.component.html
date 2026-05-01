@@ -25,14 +25,15 @@
       }
     </mat-form-field>
 
-    <mat-chip-listbox aria-label="Framework type filter"
-                      [value]="selectedType()"
-                      (change)="onTypeChange($event.value)">
-      <mat-chip-option value="">All</mat-chip-option>
-      @for (t of availableTypes; track t) {
-        <mat-chip-option [value]="t">{{ t }}</mat-chip-option>
-      }
-    </mat-chip-listbox>
+    <mat-form-field appearance="outline" class="type-field">
+      <mat-label>Type</mat-label>
+      <mat-select [value]="selectedType()" (selectionChange)="onTypeChange($event.value)">
+        <mat-option value="">All</mat-option>
+        @for (t of availableTypes(); track t) {
+          <mat-option [value]="t">{{ t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
     <div class="rating-filter">
       <span>Min Rating: {{ minRating() ?? 0 }}</span>

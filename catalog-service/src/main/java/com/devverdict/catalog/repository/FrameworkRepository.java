@@ -29,4 +29,7 @@ public interface FrameworkRepository extends JpaRepository<Framework, Long> {
             @Param("name") String name,
             @Param("type") String type,
             @Param("minRating") Double minRating);
+
+    @Query("SELECT DISTINCT f.type FROM Framework f ORDER BY f.type")
+    List<String> findDistinctTypes();
 }

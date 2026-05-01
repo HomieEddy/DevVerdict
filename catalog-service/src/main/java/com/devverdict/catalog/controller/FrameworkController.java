@@ -34,6 +34,11 @@ public class FrameworkController {
         return frameworkRepository.searchFrameworks(name, type, minRating);
     }
 
+    @GetMapping("/types")
+    public List<String> getFrameworkTypes() {
+        return frameworkRepository.findDistinctTypes();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Framework> getFrameworkById(@PathVariable Long id) {
         return frameworkRepository.findById(id)

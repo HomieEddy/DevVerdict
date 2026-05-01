@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
@@ -23,7 +23,7 @@ import { Framework } from '../../models/framework.model';
     MatInputModule,
     MatIconModule,
     MatButtonModule,
-    MatChipsModule,
+    MatSelectModule,
     MatSliderModule,
     FormsModule,
     FrameworkCardComponent
@@ -38,7 +38,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
   readonly searchTerm = signal('');
   readonly selectedType = signal<string>('');
   readonly minRating = signal<number | null>(null);
-  readonly availableTypes = ['Language', 'Framework', 'Runtime', 'Library', 'Tool'];
+  readonly availableTypes = signal<string[]>([]);
 
   readonly frameworks = signal<Framework[]>([]);
   readonly isLoading = signal(true);
@@ -58,12 +58,22 @@ export class CatalogComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    await this.loadFrameworkTypes();
     await this.loadAllFrameworks();
   }
 
   ngOnDestroy() {
     this.searchSubscription?.unsubscribe();
     this.searchSubject.complete();
+  }
+
+  private async loadFrameworkTypes() {
+    try {
+      const types = await this.frameworkService.fetchFrameworkTypes();
+      this.availableTypes.set(types);
+    } catch (err) {
+      console.error('Failed to load framework types', err);
+    }
   }
 
   private async loadAllFrameworks() {
