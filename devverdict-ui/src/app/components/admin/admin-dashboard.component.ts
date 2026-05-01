@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FrameworkManagementComponent } from './framework-management/framework-management.component';
+import { FrameworkDialogComponent } from './framework-management/framework-dialog.component';
 import { ReviewModerationComponent } from './review-moderation/review-moderation.component';
 
 @Component({
@@ -11,6 +12,7 @@ import { ReviewModerationComponent } from './review-moderation/review-moderation
     CommonModule,
     MatTabsModule,
     FrameworkManagementComponent,
+    FrameworkDialogComponent,
     ReviewModerationComponent
   ],
   template: `

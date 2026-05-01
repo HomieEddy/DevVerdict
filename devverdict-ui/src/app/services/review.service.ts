@@ -34,4 +34,12 @@ export class ReviewService {
       loader: () => lastValueFrom(this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`))
     });
   }
+
+  async getAllReviewsForModeration(): Promise<Review[]> {
+    return lastValueFrom(this.http.get<Review[]>(`${this.apiUrl}/moderation`));
+  }
+
+  async moderateReview(id: number, hidden: boolean): Promise<Review> {
+    return lastValueFrom(this.http.patch<Review>(`${this.apiUrl}/${id}/moderate`, { hidden }));
+  }
 }
