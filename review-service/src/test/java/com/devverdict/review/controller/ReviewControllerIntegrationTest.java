@@ -80,10 +80,11 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldCreateReviewAndReturn201() throws Exception {
-        ReviewRequest request = new ReviewRequest(1L, "Great framework!", 5);
+        ReviewRequest request = new ReviewRequest(1L, "Great framework!", 5, 1L, "testuser");
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "1")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.frameworkId").value(1))
@@ -94,10 +95,11 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldPublishReviewCreatedEventToKafka() throws Exception {
-        ReviewRequest request = new ReviewRequest(2L, "Solid choice for backend", 4);
+        ReviewRequest request = new ReviewRequest(2L, "Solid choice for backend", 4, 2L, "testuser");
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "2")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
@@ -112,11 +114,12 @@ class ReviewControllerIntegrationTest {
     @Test
     void shouldReturnReviewsForFrameworkOrderedByNewestFirst() throws Exception {
         // Create two reviews for the same framework
-        ReviewRequest request1 = new ReviewRequest(3L, "First review", 3);
-        ReviewRequest request2 = new ReviewRequest(3L, "Second review", 4);
+        ReviewRequest request1 = new ReviewRequest(3L, "First review", 3, 3L, "testuser");
+        ReviewRequest request2 = new ReviewRequest(3L, "Second review", 4, 3L, "testuser");
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "3")
                         .content(objectMapper.writeValueAsString(request1)))
                 .andExpect(status().isCreated());
 
@@ -124,6 +127,7 @@ class ReviewControllerIntegrationTest {
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "3")
                         .content(objectMapper.writeValueAsString(request2)))
                 .andExpect(status().isCreated());
 
@@ -143,10 +147,11 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldRejectInvalidReviewRequest() throws Exception {
-        ReviewRequest invalidRequest = new ReviewRequest(null, "", 6);
+        ReviewRequest invalidRequest = new ReviewRequest(null, "", 6, 1L, "testuser");
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "1")
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
     }
