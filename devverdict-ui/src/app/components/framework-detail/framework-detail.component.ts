@@ -57,6 +57,7 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
   private pollSubscription?: Subscription;
 
   ngOnInit(): void {
+    this.lastUpdated.set(new Date());
     this.pollSubscription = interval(this.pollInterval).subscribe(() => {
       if (!this.isSubmitting()) {
         this.frameworkResource.reload();
