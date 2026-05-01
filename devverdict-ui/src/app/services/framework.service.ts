@@ -56,4 +56,13 @@ export class FrameworkService {
       loader: () => lastValueFrom(this.http.get<Framework[]>(`${this.apiUrl}/search`, { params }))
     });
   }
+
+  fetchSearchResults(name?: string, type?: string, minRating?: number | null): Promise<Framework[]> {
+    let params = new HttpParams();
+    if (name) params = params.set('name', name);
+    if (type) params = params.set('type', type);
+    if (minRating !== undefined && minRating !== null) params = params.set('minRating', minRating.toString());
+
+    return lastValueFrom(this.http.get<Framework[]>(`${this.apiUrl}/search`, { params }));
+  }
 }

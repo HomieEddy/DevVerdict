@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,6 +12,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FrameworkService } from '../../services/framework.service';
 import { FrameworkCardComponent } from '../framework-card/framework-card.component';
+import { Framework } from '../../models/framework.model';
 
 @Component({
   selector: 'app-catalog',
@@ -30,7 +31,7 @@ import { FrameworkCardComponent } from '../framework-card/framework-card.compone
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss'
 })
-export class CatalogComponent implements OnDestroy {
+export class CatalogComponent implements OnInit, OnDestroy {
   private readonly frameworkService = inject(FrameworkService);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -39,10 +40,12 @@ export class CatalogComponent implements OnDestroy {
   readonly minRating = signal<number | null>(null);
   readonly availableTypes = ['Language', 'Framework', 'Runtime', 'Library', 'Tool'];
 
+  readonly frameworks = signal<Framework[]>([]);
+  readonly isLoading = signal(true);
+  readonly error = signal<string | null>(null);
+
   private readonly searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
-
-  frameworksResource = this.frameworkService.getAllFrameworks();
 
   constructor() {
     this.searchSubscription = this.searchSubject.pipe(
@@ -54,9 +57,26 @@ export class CatalogComponent implements OnDestroy {
     });
   }
 
+  async ngOnInit() {
+    await this.loadAllFrameworks();
+  }
+
   ngOnDestroy() {
     this.searchSubscription?.unsubscribe();
     this.searchSubject.complete();
+  }
+
+  private async loadAllFrameworks() {
+    this.isLoading.set(true);
+    this.error.set(null);
+    try {
+      const results = await this.frameworkService.fetchAllFrameworks();
+      this.frameworks.set(results);
+    } catch (err: any) {
+      this.error.set(err.message || 'Failed to load frameworks');
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   onSearchChange(value: string): void {
@@ -83,19 +103,28 @@ export class CatalogComponent implements OnDestroy {
     this.searchTerm.set('');
     this.selectedType.set('');
     this.minRating.set(null);
-    this.frameworksResource = this.frameworkService.getAllFrameworks();
+    this.loadAllFrameworks();
   }
 
   hasActiveFilters(): boolean {
     return !!(this.searchTerm() || this.selectedType() || this.minRating() !== null);
   }
 
-  private performSearch(): void {
+  private async performSearch(): Promise<void> {
     const name = this.searchTerm() || undefined;
     const type = this.selectedType() || undefined;
     const rating = this.minRating();
 
-    this.frameworksResource = this.frameworkService.searchFrameworks(name, type, rating ?? undefined);
+    this.isLoading.set(true);
+    this.error.set(null);
+    try {
+      const results = await this.frameworkService.fetchSearchResults(name, type, rating ?? undefined);
+      this.frameworks.set(results);
+    } catch (err: any) {
+      this.error.set(err.message || 'Search failed');
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   showError(message: string): void {

@@ -1,12 +1,12 @@
-@if (frameworksResource.isLoading()) {
+@if (isLoading()) {
   <div class="loading-container">
     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
     <p>Loading frameworks...</p>
   </div>
-} @else if (frameworksResource.error()) {
+} @else if (error()) {
   <div class="error-container">
-    <p>Failed to load frameworks.</p>
-    <button (click)="showError('Could not connect to the catalog service. Please try again later.')">
+    <p>{{ error() }}</p>
+    <button (click)="showError(error()!)">
       Show Details
     </button>
   </div>
@@ -51,8 +51,8 @@
     }
   </div>
 
-  @let frameworks = frameworksResource.value();
-  @if (frameworks && frameworks.length === 0) {
+  @let frameworkList = frameworks();
+  @if (frameworkList.length === 0) {
     <div class="empty-state">
       <mat-icon class="empty-icon">search_off</mat-icon>
       <p>No frameworks match your search.</p>
@@ -60,7 +60,7 @@
     </div>
   } @else {
     <div class="catalog-grid">
-      @for (framework of frameworks; track framework.id) {
+      @for (framework of frameworkList; track framework.id) {
         <app-framework-card [framework]="framework" />
       }
     </div>
