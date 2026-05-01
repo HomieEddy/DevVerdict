@@ -8,10 +8,11 @@ app:
 spring:
   application:
     name: gateway
-  redis:
-    host: redis
-    port: 6379
-    timeout: 2000ms
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2000ms
   cloud:
     gateway:
       default-filters:
