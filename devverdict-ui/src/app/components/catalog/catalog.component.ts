@@ -1,5 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,11 +30,9 @@ import { FrameworkCardComponent } from '../framework-card/framework-card.compone
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss'
 })
-export class CatalogComponent implements OnInit, OnDestroy {
+export class CatalogComponent implements OnDestroy {
   private readonly frameworkService = inject(FrameworkService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
 
   readonly searchTerm = signal('');
   readonly selectedType = signal<string>('');
@@ -55,23 +52,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
       this.searchTerm.set(term);
       this.performSearch();
     });
-  }
-
-  ngOnInit() {
-    const params = this.route.snapshot.queryParams;
-    const name = params['search'] || '';
-    const type = params['type'] || '';
-    const rating = params['minRating'] ? parseFloat(params['minRating']) : null;
-
-    this.searchTerm.set(name);
-    this.selectedType.set(type);
-    this.minRating.set(rating);
-
-    if (name || type || rating !== null) {
-      this.frameworksResource = this.frameworkService.searchFrameworks(
-        name || undefined, type || undefined, rating
-      );
-    }
   }
 
   ngOnDestroy() {
@@ -94,11 +74,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
     this.performSearch();
   }
 
-  onRatingChange(value: number): void {
-    this.minRating.set(value);
-    this.performSearch();
-  }
-
   clearSearch(): void {
     this.searchTerm.set('');
     this.searchSubject.next('');
@@ -109,7 +84,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
     this.selectedType.set('');
     this.minRating.set(null);
     this.frameworksResource = this.frameworkService.getAllFrameworks();
-    this.router.navigate([], { queryParams: {} });
   }
 
   hasActiveFilters(): boolean {
@@ -122,17 +96,6 @@ export class CatalogComponent implements OnInit, OnDestroy {
     const rating = this.minRating();
 
     this.frameworksResource = this.frameworkService.searchFrameworks(name, type, rating ?? undefined);
-
-    const queryParams: any = {};
-    if (name) queryParams.search = name;
-    if (type) queryParams.type = type;
-    if (rating !== null && rating !== undefined) queryParams.minRating = rating;
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      replaceUrl: true
-    });
   }
 
   showError(message: string): void {
