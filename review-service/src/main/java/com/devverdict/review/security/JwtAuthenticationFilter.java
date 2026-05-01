@@ -9,12 +9,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -50,6 +54,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 wrappedRequest.addHeader("X-User-Id", tokenUserId);
                 wrappedRequest.addHeader("X-User-Role", role != null ? role : "USER");
+
+                // Populate Spring Security context for filter-chain authorization
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        tokenUserId,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role : "USER")))
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtException | IllegalArgumentException e) {
                 // Invalid token — continue without adding headers
             }
