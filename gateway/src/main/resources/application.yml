@@ -26,12 +26,6 @@ spring:
               - X-Requested-With
             allowCredentials: false
         add-to-simple-url-handler-mapping: true
-      default-filters:
-        - name: Retry
-          args:
-            retries: 3
-            statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,INTERNAL_SERVER_ERROR
-            methods: GET
       routes:
         - id: catalog-service
           uri: http://catalog-service:8081
