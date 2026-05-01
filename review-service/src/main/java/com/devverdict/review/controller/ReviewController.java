@@ -2,8 +2,13 @@ package com.devverdict.review.controller;
 
 import com.devverdict.review.dto.ReviewRequest;
 import com.devverdict.review.dto.ReviewResponse;
+import com.devverdict.review.dto.VoteRequest;
 import com.devverdict.review.service.ReviewService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +38,10 @@ public class ReviewController {
     }
 
     @GetMapping("/framework/{frameworkId}")
-    public ResponseEntity<List<ReviewResponse>> getReviewsByFramework(@PathVariable Long frameworkId) {
-        List<ReviewResponse> reviews = reviewService.getReviewsByFramework(frameworkId);
+    public ResponseEntity<Page<ReviewResponse>> getReviewsByFramework(
+            @PathVariable Long frameworkId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ReviewResponse> reviews = reviewService.getReviewsByFramework(frameworkId, pageable);
         return ResponseEntity.ok(reviews);
     }
 
@@ -65,6 +72,18 @@ public class ReviewController {
         }
         reviewService.deleteReview(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/vote")
+    public ResponseEntity<ReviewResponse> voteReview(
+            @PathVariable Long id,
+            @Valid @RequestBody VoteRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        ReviewResponse response = reviewService.voteReview(id, userId, request.voteType());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/moderation")
