@@ -1,4 +1,21 @@
 services:
+  postgres-auth:
+    image: postgres:17.9-alpine
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: devverdict
+      POSTGRES_PASSWORD: devverdict
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   postgres-catalog:
     image: postgres:17.9-alpine
     environment:
@@ -95,6 +112,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       DB_USER: devverdict
       DB_PASSWORD: devverdict
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       postgres-reviews:
         condition: service_healthy
@@ -102,6 +120,25 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_USER: devverdict
+      DB_PASSWORD: devverdict
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -117,6 +154,8 @@ services:
       catalog-service:
         condition: service_healthy
       review-service:
+        condition: service_healthy
+      auth-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -140,6 +179,7 @@ services:
       start_period: 120s
 
 volumes:
+  pg_auth_data:
   pg_catalog_data:
   pg_reviews_data:
   kafka_data:

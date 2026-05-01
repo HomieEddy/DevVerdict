@@ -3,6 +3,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY catalog-service/pom.xml catalog-service/
 COPY review-service/pom.xml review-service/
+COPY auth-service/pom.xml auth-service/
 COPY gateway/pom.xml gateway/
 RUN mvn dependency:go-offline -pl gateway -am
 

@@ -25,6 +25,14 @@ spring:
       retries: 3
       enable-idempotence: true
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-devverdict-jwt-secret-key-2026}
+
+logging:
+  level:
+    com.devverdict.review.security.JwtAuthenticationFilter: DEBUG
+
 management:
   endpoints:
     web:

@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { FrameworkService } from '../../services/framework.service';
 import { ReviewService } from '../../services/review.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-framework-detail',
@@ -33,8 +34,10 @@ import { ReviewService } from '../../services/review.service';
 })
 export class FrameworkDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly frameworkService = inject(FrameworkService);
   private readonly reviewService = inject(ReviewService);
+  private readonly authService = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly frameworkId = Number(this.route.snapshot.paramMap.get('id'));
@@ -45,6 +48,12 @@ export class FrameworkDetailComponent {
   readonly rating = signal(0);
   readonly hoveredRating = signal(0);
   readonly isSubmitting = signal(false);
+  readonly isLoggedIn = computed(() => this.authService.isAuthenticated());
+  readonly currentUserId = computed(() => this.authService.currentUser()?.id);
+
+  canEditReview(review: any): boolean {
+    return review.userId === this.currentUserId();
+  }
 
   getTypeColor(type: string): string {
     switch (type.toLowerCase()) {
@@ -64,6 +73,12 @@ export class FrameworkDetailComponent {
   }
 
   async submitReview(): Promise<void> {
+    if (!this.isLoggedIn()) {
+      this.showError('Please log in to submit a review.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     const currentRating = this.rating();
     const currentComment = this.comment();
 
@@ -83,7 +98,9 @@ export class FrameworkDetailComponent {
       await this.reviewService.createReview({
         frameworkId: this.frameworkId,
         comment: currentComment.trim(),
-        rating: currentRating
+        rating: currentRating,
+        userId: this.currentUserId(),
+        username: this.authService.currentUser()?.username
       });
 
       this.comment.set('');
@@ -92,10 +109,21 @@ export class FrameworkDetailComponent {
 
       this.reviewsResource.reload();
       this.frameworkResource.reload();
-    } catch (err) {
-      this.showError('Failed to submit review. Please try again.');
+    } catch (err: any) {
+      this.showError(err.error?.message || 'Failed to submit review. Please try again.');
     } finally {
       this.isSubmitting.set(false);
+    }
+  }
+
+  async deleteReview(reviewId: number): Promise<void> {
+    try {
+      await this.reviewService.deleteReview(reviewId);
+      this.showSuccess('Review deleted successfully!');
+      this.reviewsResource.reload();
+      this.frameworkResource.reload();
+    } catch (err: any) {
+      this.showError(err.error?.message || 'Failed to delete review.');
     }
   }
 

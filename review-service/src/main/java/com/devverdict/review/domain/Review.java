@@ -20,6 +20,12 @@ public class Review {
     @Column(nullable = false)
     private Integer rating;
 
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "username", length = 50)
+    private String username;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -30,6 +36,15 @@ public class Review {
         this.frameworkId = frameworkId;
         this.comment = comment;
         this.rating = rating;
+        this.createdAt = Instant.now();
+    }
+
+    public Review(Long frameworkId, String comment, Integer rating, Long userId, String username) {
+        this.frameworkId = frameworkId;
+        this.comment = comment;
+        this.rating = rating;
+        this.userId = userId;
+        this.username = username;
         this.createdAt = Instant.now();
     }
 
@@ -70,6 +85,22 @@ public class Review {
 
     public void setRating(Integer rating) {
         this.rating = rating;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Instant getCreatedAt() {
