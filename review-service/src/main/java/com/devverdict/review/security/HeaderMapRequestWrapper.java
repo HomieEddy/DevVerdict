@@ -20,27 +20,27 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
 
     public void removeHeader(String name) {
         removedHeaders.add(name);
+        customHeaders.remove(name);
     }
 
     @Override
     public String getHeader(String name) {
+        if (customHeaders.containsKey(name)) {
+            return customHeaders.get(name);
+        }
         if (removedHeaders.contains(name)) {
             return null;
-        }
-        String headerValue = customHeaders.get(name);
-        if (headerValue != null) {
-            return headerValue;
         }
         return super.getHeader(name);
     }
 
     @Override
     public Enumeration<String> getHeaders(String name) {
-        if (removedHeaders.contains(name)) {
-            return Collections.emptyEnumeration();
-        }
         if (customHeaders.containsKey(name)) {
             return Collections.enumeration(List.of(customHeaders.get(name)));
+        }
+        if (removedHeaders.contains(name)) {
+            return Collections.emptyEnumeration();
         }
         return super.getHeaders(name);
     }
