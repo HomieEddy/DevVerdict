@@ -9,9 +9,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -57,18 +55,12 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
                 String userId = claims.getSubject();
                 String role = claims.get("role", String.class);
 
-                ServerHttpRequestDecorator decoratedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
-                    @Override
-                    public HttpHeaders getHeaders() {
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.putAll(super.getHeaders());
-                        headers.add("X-User-Id", userId);
-                        headers.add("X-User-Role", role != null ? role : "USER");
-                        return headers;
-                    }
-                };
+                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                        .header("X-User-Id", userId)
+                        .header("X-User-Role", role != null ? role : "USER")
+                        .build();
 
-                return chain.filter(exchange.mutate().request(decoratedRequest).build());
+                return chain.filter(exchange.mutate().request(mutatedRequest).build());
             } catch (JwtException | IllegalArgumentException e) {
                 return unauthorized(exchange.getResponse());
             }
