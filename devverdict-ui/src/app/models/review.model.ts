@@ -5,6 +5,7 @@ export interface Review {
   rating: number;
   userId?: number;
   username?: string;
+  hidden?: boolean;
   createdAt: string;
 }
 

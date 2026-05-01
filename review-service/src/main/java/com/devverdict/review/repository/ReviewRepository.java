@@ -9,7 +9,13 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
+    List<Review> findByFrameworkIdAndHiddenFalseOrderByCreatedAtDesc(Long frameworkId);
+
+    List<Review> findByUserIdAndHiddenFalseOrderByCreatedAtDesc(Long userId);
+
     List<Review> findByFrameworkIdOrderByCreatedAtDesc(Long frameworkId);
 
     List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<Review> findAllByOrderByCreatedAtDesc();
 }

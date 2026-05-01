@@ -31,8 +31,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -154,5 +153,70 @@ class ReviewControllerIntegrationTest {
                         .header("X-User-Id", "1")
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldHideReviewWhenAdmin() throws Exception {
+        ReviewRequest request = new ReviewRequest(10L, "To be hidden", 3, 10L, "testuser");
+
+        String response = mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "10")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Long reviewId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(patch("/api/reviews/{id}/moderate", reviewId)
+                        .header("X-User-Role", "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hidden\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hidden").value(true));
+    }
+
+    @Test
+    void shouldRejectModerationWhenNotAdmin() throws Exception {
+        ReviewRequest request = new ReviewRequest(11L, "Normal review", 4, 11L, "testuser");
+
+        String response = mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "11")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Long reviewId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(patch("/api/reviews/{id}/moderate", reviewId)
+                        .header("X-User-Role", "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hidden\":true}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldExcludeHiddenReviewsFromPublicList() throws Exception {
+        ReviewRequest request = new ReviewRequest(12L, "Hidden review", 2, 12L, "testuser");
+
+        String response = mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "12")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Long reviewId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(patch("/api/reviews/{id}/moderate", reviewId)
+                        .header("X-User-Role", "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hidden\":true}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/reviews/framework/12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 }
