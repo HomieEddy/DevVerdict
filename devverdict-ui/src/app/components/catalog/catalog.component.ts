@@ -88,6 +88,12 @@ export class CatalogComponent implements OnInit, OnDestroy {
     this.performSearch();
   }
 
+  onSliderChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).valueAsNumber;
+    this.minRating.set(value);
+    this.performSearch();
+  }
+
   onRatingChange(value: number): void {
     this.minRating.set(value);
     this.performSearch();
