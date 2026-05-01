@@ -1,82 +1,29 @@
 package com.devverdict.gateway.filter;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-
 @Component
 public class JwtValidationFilter implements GlobalFilter, Ordered {
 
-    private final SecretKey key;
-
-    public JwtValidationFilter(@Value("${app.jwt.secret}") String secret) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    public JwtValidationFilter() {
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
-        String method = exchange.getRequest().getMethod().name();
 
-        // Public routes — no JWT required
-        if (path.startsWith("/api/auth/") || path.startsWith("/api/catalog/")) {
+        // Public routes — no JWT required at Gateway level
+        // Reviews service validates JWT independently (defense in depth)
+        if (path.startsWith("/api/auth/") || path.startsWith("/api/catalog/") || path.startsWith("/api/reviews/")) {
             return chain.filter(exchange);
         }
 
-        // Reviews: read operations are public, write operations require JWT
-        if (path.startsWith("/api/reviews/")) {
-            if ("GET".equals(method)) {
-                return chain.filter(exchange);
-            }
-
-            String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return unauthorized(exchange.getResponse());
-            }
-
-            String token = authHeader.substring(7);
-            try {
-                Claims claims = Jwts.parser()
-                        .verifyWith(key)
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload();
-
-                String userId = claims.getSubject();
-                String role = claims.get("role", String.class);
-
-                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", role != null ? role : "USER")
-                        .build();
-
-                return chain.filter(exchange.mutate().request(mutatedRequest).build());
-            } catch (JwtException | IllegalArgumentException e) {
-                return unauthorized(exchange.getResponse());
-            }
-        }
-
         return chain.filter(exchange);
-    }
-
-    private Mono<Void> unauthorized(ServerHttpResponse response) {
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
-        return response.setComplete();
     }
 
     @Override

@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        String gatewayUserId = request.getHeader("X-User-Id");
+        HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper(request);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -42,17 +42,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .getPayload();
 
                 String tokenUserId = claims.getSubject();
-                // Defense in depth: verify Gateway header matches token claim
-                if (gatewayUserId != null && !gatewayUserId.equals(tokenUserId)) {
-                    throw new JwtException("User ID mismatch between token and gateway");
-                }
+                String role = claims.get("role", String.class);
 
-                request.setAttribute("userId", Long.valueOf(tokenUserId));
+                wrappedRequest.addHeader("X-User-Id", tokenUserId);
+                wrappedRequest.addHeader("X-User-Role", role != null ? role : "USER");
             } catch (JwtException | IllegalArgumentException e) {
-                // Invalid token — continue without setting userId
+                // Invalid token — continue without adding headers
             }
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(wrappedRequest, response);
     }
 }
