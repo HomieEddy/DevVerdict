@@ -13,6 +13,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
 
+import org.springframework.cloud.gateway.support.ipresolver.XForwardedRemoteAddrResolver;
+import org.springframework.cloud.gateway.support.ipresolver.RemoteAddressResolver;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
 import java.util.stream.Collectors;
 
 @Configuration
@@ -40,5 +45,19 @@ public class GatewayConfig {
         exceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
         exceptionHandler.setMessageReaders(serverCodecConfigurer.getReaders());
         return exceptionHandler;
+    }
+
+    @Bean
+    public RemoteAddressResolver remoteAddressResolver() {
+        return XForwardedRemoteAddrResolver.maxTrustedIndex(1);
+    }
+
+    @Bean
+    public org.springframework.cloud.gateway.filter.ratelimit.KeyResolver ipKeyResolver(RemoteAddressResolver remoteAddressResolver) {
+        return exchange -> {
+            java.net.InetSocketAddress remoteAddress = remoteAddressResolver.resolve(exchange);
+            String ip = remoteAddress != null ? remoteAddress.getAddress().getHostAddress() : "unknown";
+            return Mono.just(ip);
+        };
     }
 }
