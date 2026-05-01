@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { interval, Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,7 +33,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './framework-detail.component.html',
   styleUrl: './framework-detail.component.scss'
 })
-export class FrameworkDetailComponent {
+export class FrameworkDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly frameworkService = inject(FrameworkService);
@@ -50,9 +51,36 @@ export class FrameworkDetailComponent {
   readonly isSubmitting = signal(false);
   readonly isLoggedIn = computed(() => this.authService.isAuthenticated());
   readonly currentUserId = computed(() => this.authService.currentUser()?.id);
+  readonly lastUpdated = signal<Date | null>(null);
+
+  private readonly pollInterval = 30000;
+  private pollSubscription?: Subscription;
+
+  ngOnInit(): void {
+    this.pollSubscription = interval(this.pollInterval).subscribe(() => {
+      if (!this.isSubmitting()) {
+        this.frameworkResource.reload();
+        this.reviewsResource.reload();
+        this.lastUpdated.set(new Date());
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.pollSubscription?.unsubscribe();
+  }
 
   canEditReview(review: any): boolean {
     return review.userId === this.currentUserId();
+  }
+
+  formatTimeAgo(date: Date): string {
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
   }
 
   getTypeColor(type: string): string {
@@ -109,6 +137,7 @@ export class FrameworkDetailComponent {
 
       this.reviewsResource.reload();
       this.frameworkResource.reload();
+      this.lastUpdated.set(new Date());
     } catch (err: any) {
       this.showError(err.error?.message || 'Failed to submit review. Please try again.');
     } finally {

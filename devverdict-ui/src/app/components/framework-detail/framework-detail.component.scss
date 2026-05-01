@@ -44,6 +44,21 @@
   margin-bottom: 0;
 }
 
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #757575;
+  margin-bottom: 0.5rem;
+
+  .update-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .detail-card {
   .framework-name {
     font-size: 2rem;
