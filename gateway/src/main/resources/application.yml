@@ -34,32 +34,20 @@ spring:
             methods: GET,POST
       routes:
         - id: catalog-service
-          uri: lb://catalog-service
+          uri: http://catalog-service:8081
           predicates:
             - Path=/api/catalog/**
         - id: review-service
-          uri: lb://review-service
+          uri: http://review-service:8082
           predicates:
             - Path=/api/reviews/**
         - id: auth-service
-          uri: lb://auth-service
+          uri: http://auth-service:8083
           predicates:
             - Path=/api/auth/**,/api/users/**
       httpclient:
         connect-timeout: 2000
         response-timeout: 5s
-      loadbalancer:
-        configurations: default
-      discovery:
-        client:
-          simple:
-            instances:
-              catalog-service:
-                - uri: http://catalog-service:8081
-              review-service:
-                - uri: http://review-service:8082
-              auth-service:
-                - uri: http://auth-service:8083
 
 management:
   endpoints:
