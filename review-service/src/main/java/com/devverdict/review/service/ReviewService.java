@@ -2,18 +2,24 @@ package com.devverdict.review.service;
 
 import com.devverdict.review.domain.OutboxEvent;
 import com.devverdict.review.domain.Review;
+import com.devverdict.review.domain.ReviewVote;
+import com.devverdict.review.domain.VoteType;
 import com.devverdict.review.dto.ReviewCreatedEvent;
 import com.devverdict.review.dto.ReviewRequest;
 import com.devverdict.review.dto.ReviewResponse;
 import com.devverdict.review.repository.OutboxEventRepository;
 import com.devverdict.review.repository.ReviewRepository;
+import com.devverdict.review.repository.ReviewVoteRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,13 +29,16 @@ public class ReviewService {
     private static final String TOPIC = "review-updates";
 
     private final ReviewRepository reviewRepository;
+    private final ReviewVoteRepository reviewVoteRepository;
     private final OutboxEventRepository outboxRepository;
     private final ObjectMapper objectMapper;
 
     public ReviewService(ReviewRepository reviewRepository,
+                         ReviewVoteRepository reviewVoteRepository,
                          OutboxEventRepository outboxRepository,
                          ObjectMapper objectMapper) {
         this.reviewRepository = reviewRepository;
+        this.reviewVoteRepository = reviewVoteRepository;
         this.outboxRepository = outboxRepository;
         this.objectMapper = objectMapper;
     }
@@ -41,7 +50,9 @@ public class ReviewService {
             request.comment(),
             request.rating(),
             authenticatedUserId,
-            request.username()
+            request.username(),
+            request.pros(),
+            request.cons()
         );
 
         Review saved = reviewRepository.save(review);
@@ -83,6 +94,8 @@ public class ReviewService {
 
         review.setComment(request.comment());
         review.setRating(request.rating());
+        review.setPros(request.pros());
+        review.setCons(request.cons());
         Review updated = reviewRepository.save(review);
         return ReviewResponse.fromEntity(updated);
     }
@@ -108,6 +121,12 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByFramework(Long frameworkId, Pageable pageable) {
+        return reviewRepository.findByFrameworkIdAndHiddenFalseOrderByCreatedAtDesc(frameworkId, pageable)
+            .map(ReviewResponse::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByUser(Long userId) {
         return reviewRepository.findByUserIdAndHiddenFalseOrderByCreatedAtDesc(userId)
             .stream()
@@ -130,6 +149,50 @@ public class ReviewService {
         review.setHidden(hidden);
         Review updated = reviewRepository.save(review);
         logger.info("Moderated review id={}, hidden={}", reviewId, hidden);
+        return ReviewResponse.fromEntity(updated);
+    }
+
+    @Transactional
+    public ReviewResponse voteReview(Long reviewId, Long userId, VoteType voteType) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+
+        Optional<ReviewVote> existingVote = reviewVoteRepository.findByReviewIdAndUserId(reviewId, userId);
+
+        if (existingVote.isPresent()) {
+            ReviewVote vote = existingVote.get();
+            if (vote.getVoteType() == voteType) {
+                // Same vote = toggle off (remove vote)
+                reviewVoteRepository.deleteByReviewIdAndUserId(reviewId, userId);
+                if (voteType == VoteType.UPVOTE) {
+                    review.decrementHelpfulVotes();
+                } else {
+                    review.decrementNotHelpfulVotes();
+                }
+            } else {
+                // Different vote = switch
+                vote.setVoteType(voteType);
+                reviewVoteRepository.save(vote);
+                if (voteType == VoteType.UPVOTE) {
+                    review.incrementHelpfulVotes();
+                    review.decrementNotHelpfulVotes();
+                } else {
+                    review.incrementNotHelpfulVotes();
+                    review.decrementHelpfulVotes();
+                }
+            }
+        } else {
+            // New vote
+            ReviewVote newVote = new ReviewVote(reviewId, userId, voteType);
+            reviewVoteRepository.save(newVote);
+            if (voteType == VoteType.UPVOTE) {
+                review.incrementHelpfulVotes();
+            } else {
+                review.incrementNotHelpfulVotes();
+            }
+        }
+
+        Review updated = reviewRepository.save(review);
         return ReviewResponse.fromEntity(updated);
     }
 }
