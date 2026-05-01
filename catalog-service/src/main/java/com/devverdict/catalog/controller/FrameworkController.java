@@ -26,19 +26,19 @@ public class FrameworkController {
         return frameworkRepository.findAll();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Framework> getFrameworkById(@PathVariable Long id) {
-        return frameworkRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/search")
     public List<Framework> searchFrameworks(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Double minRating) {
         return frameworkRepository.searchFrameworks(name, type, minRating);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Framework> getFrameworkById(@PathVariable Long id) {
+        return frameworkRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
