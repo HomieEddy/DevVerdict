@@ -31,7 +31,7 @@ spring:
           args:
             retries: 3
             statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,INTERNAL_SERVER_ERROR
-            methods: GET,POST
+            methods: GET
       routes:
         - id: catalog-service
           uri: http://catalog-service:8081
