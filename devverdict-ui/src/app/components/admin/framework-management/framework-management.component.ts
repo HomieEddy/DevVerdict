@@ -10,8 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { FrameworkService, CreateFrameworkRequest } from '../../services/framework.service';
-import { Framework } from '../../models/framework.model';
+import { FrameworkService, CreateFrameworkRequest } from '../../../services/framework.service';
+import { Framework } from '../../../models/framework.model';
 import { FrameworkDialogComponent } from './framework-dialog.component';
 
 @Component({
@@ -101,12 +101,13 @@ export class FrameworkManagementComponent {
     this.loadFrameworks();
   }
 
-  loadFrameworks(): void {
-    this.frameworkService.getAllFrameworks().value?.then(data => {
-      if (data) this.frameworks.set(data);
-    }).catch(() => {
+  async loadFrameworks(): Promise<void> {
+    try {
+      const data = await this.frameworkService.fetchAllFrameworks();
+      this.frameworks.set(data);
+    } catch {
       this.snackBar.open('Failed to load frameworks', 'Close', { duration: 3000 });
-    });
+    }
   }
 
   openAddDialog(): void {

@@ -6,8 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ReviewService } from '../../services/review.service';
-import { Review } from '../../models/review.model';
+import { ReviewService } from '../../../services/review.service';
+import { Review } from '../../../models/review.model';
 
 @Component({
   selector: 'app-review-moderation',
