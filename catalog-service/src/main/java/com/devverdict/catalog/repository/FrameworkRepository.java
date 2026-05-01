@@ -17,7 +17,7 @@ public interface FrameworkRepository extends JpaRepository<Framework, Long> {
     int updateAverageRating(@Param("frameworkId") Long frameworkId, @Param("rating") Integer rating);
 
     @Query("SELECT f FROM Framework f " +
-           "WHERE (:name IS NULL OR LOWER(f.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+           "WHERE (:name IS NULL OR LOWER(f.name) LIKE :name) " +
            "AND (:type IS NULL OR f.type = :type) " +
            "AND (:minRating IS NULL OR f.averageRating >= :minRating) " +
            "ORDER BY f.name")

@@ -31,7 +31,8 @@ public class FrameworkController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Double minRating) {
-        return frameworkRepository.searchFrameworks(name, type, minRating);
+        String namePattern = (name != null && !name.isBlank()) ? "%" + name.toLowerCase() + "%" : null;
+        return frameworkRepository.searchFrameworks(namePattern, type, minRating);
     }
 
     @GetMapping("/types")
