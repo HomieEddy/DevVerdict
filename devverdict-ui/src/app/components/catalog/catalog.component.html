@@ -11,49 +11,65 @@
     </button>
   </div>
 } @else {
-  <div class="search-filter-bar">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-icon matPrefix>search</mat-icon>
-      <input matInput
-             [ngModel]="searchTerm()"
-             (ngModelChange)="onSearchChange($event)"
-             placeholder="Search frameworks...">
-      @if (searchTerm()) {
-        <button mat-icon-button matSuffix (click)="clearSearch()">
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="type-field">
-      <mat-label>Type</mat-label>
-      <mat-select [value]="selectedType()" (selectionChange)="onTypeChange($event.value)">
-        <mat-option value="">All</mat-option>
-        @for (t of availableTypes(); track t) {
-          <mat-option [value]="t">{{ t }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <div class="rating-filter">
-      <span>Min Rating: {{ minRating() ?? 0 }}</span>
-      <mat-slider min="0" max="5" step="0.5" discrete>
-        <input matSliderThumb
-               [value]="minRating() ?? 0"
-               (change)="onSliderChange($event)">
-      </mat-slider>
+  <div class="catalog-hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Explore Developer Tools</h1>
+      <p class="hero-subtitle">Browse programming languages, frameworks, and tools rated by the community</p>
     </div>
-
-    @if (hasActiveFilters()) {
-      <button mat-stroked-button (click)="clearFilters()">
-        <mat-icon>filter_alt_off</mat-icon>
-        Clear all filters
-      </button>
-    }
   </div>
 
-  @let frameworkList = frameworks();
-  @if (frameworkList.length === 0) {
+  <div class="search-filter-bar">
+    <div class="search-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput
+               [ngModel]="searchTerm()"
+               (ngModelChange)="onSearchChange($event)"
+               placeholder="Search frameworks...">
+        @if (searchTerm()) {
+          <button mat-icon-button matSuffix (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="type-field">
+        <mat-label>Type</mat-label>
+        <mat-select [value]="selectedType()" (selectionChange)="onTypeChange($event.value)">
+          <mat-option value="">All Types</mat-option>
+          @for (t of availableTypes(); track t) {
+            <mat-option [value]="t">{{ t }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="rating-filter">
+        <span>Min Rating: {{ minRating() ?? 0 }}</span>
+        <mat-slider min="0" max="5" step="0.5" discrete>
+          <input matSliderThumb
+                 [value]="minRating() ?? 0"
+                 (change)="onSliderChange($event)">
+        </mat-slider>
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button mat-stroked-button class="clear-btn" (click)="clearFilters()">
+          <mat-icon>filter_alt_off</mat-icon>
+          Clear
+        </button>
+      }
+    </div>
+
+    <div class="results-meta">
+      <span class="results-count">{{ totalCount() }} framework{{ totalCount() === 1 ? '' : 's' }} found</span>
+      @if (hasActiveFilters()) {
+        <span class="active-filters-badge">Filters active</span>
+      }
+    </div>
+  </div>
+
+  @let frameworkList = paginatedFrameworks();
+  @if (totalCount() === 0) {
     <div class="empty-state">
       <mat-icon class="empty-icon">search_off</mat-icon>
       <p>No frameworks match your search.</p>
@@ -65,5 +81,14 @@
         <app-framework-card [framework]="framework" />
       }
     </div>
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="pageSizeOptions"
+      [showFirstLastButtons]="true"
+      (page)="onPageChange($event)">
+    </mat-paginator>
   }
 }

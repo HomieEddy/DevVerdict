@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -25,6 +26,7 @@ import { Framework } from '../../models/framework.model';
     MatButtonModule,
     MatSelectModule,
     MatSliderModule,
+    MatPaginatorModule,
     FormsModule,
     FrameworkCardComponent
   ],
@@ -44,6 +46,18 @@ export class CatalogComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
 
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(25);
+  readonly pageSizeOptions = [10, 25, 50];
+
+  readonly paginatedFrameworks = computed(() => {
+    const all = this.frameworks();
+    const start = this.pageIndex() * this.pageSize();
+    return all.slice(start, start + this.pageSize());
+  });
+
+  readonly totalCount = computed(() => this.frameworks().length);
+
   private readonly searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
 
@@ -53,6 +67,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
       distinctUntilChanged()
     ).subscribe(term => {
       this.searchTerm.set(term);
+      this.pageIndex.set(0);
       this.performSearch();
     });
   }
@@ -95,13 +110,20 @@ export class CatalogComponent implements OnInit, OnDestroy {
 
   onTypeChange(value: string): void {
     this.selectedType.set(value);
+    this.pageIndex.set(0);
     this.performSearch();
   }
 
   onSliderChange(event: Event): void {
     const value = (event.target as HTMLInputElement).valueAsNumber;
     this.minRating.set(value);
+    this.pageIndex.set(0);
     this.performSearch();
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   clearSearch(): void {
@@ -113,6 +135,7 @@ export class CatalogComponent implements OnInit, OnDestroy {
     this.searchTerm.set('');
     this.selectedType.set('');
     this.minRating.set(null);
+    this.pageIndex.set(0);
     this.loadAllFrameworks();
   }
 
