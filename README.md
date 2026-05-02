@@ -226,10 +226,12 @@ PUT  /api/catalog/frameworks/{id}               # Update framework (admin)
 DELETE /api/catalog/frameworks/{id}             # Delete framework (admin)
 ```
 
-**Search Parameters:**
+**Search Parameters (API):**
 - `name` — Filter by name (case-insensitive partial match)
 - `type` — Filter by category (e.g., Language, Framework)
 - `minRating` — Filter by minimum average rating
+
+> **Note:** Search and filter state is managed in the Angular component (not synced to the browser URL). Filters are sent as query parameters to the backend API on each request, but the UI does not reflect them in the address bar.
 
 ### Review Service
 
@@ -329,6 +331,14 @@ WHERE id = :frameworkId
 **Decision:** Auth Service issues JWT tokens. Gateway validates tokens on protected routes.
 
 **Rationale:** Stateless authentication scales horizontally. Services receive user context via headers without managing sessions.
+
+### 9. Client-Side Filter State (No URL Sync)
+
+**Decision:** Catalog search and filter state lives in Angular component signals, not in browser URL query parameters.
+
+**Rationale:** Avoids complex URL parsing, prevents duplicate requests on navigation, and keeps the catalog component self-contained. Filters are sent as query params to the backend API, but the UI address bar remains unchanged.
+
+**Trade-off:** Filter state is lost on page refresh. Users cannot share filtered views via URL.
 
 ---
 
