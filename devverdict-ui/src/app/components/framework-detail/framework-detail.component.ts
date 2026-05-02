@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { interval, Subscription, lastValueFrom } from 'rxjs';
+import { Subject, lastValueFrom, takeUntil } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -62,24 +62,32 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
   readonly isLoggedIn = computed(() => this.authService.isAuthenticated());
   readonly currentUserId = computed(() => this.authService.currentUser()?.id);
   readonly lastUpdated = signal<Date | null>(null);
+  readonly sseConnected = signal(false);
 
-  private readonly pollInterval = 30000;
-  private pollSubscription?: Subscription;
+  private readonly destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.lastUpdated.set(new Date());
     this.loadReviews();
-    this.pollSubscription = interval(this.pollInterval).subscribe(() => {
-      if (!this.isSubmitting()) {
-        this.frameworkResource.reload();
-        this.loadReviews();
-        this.lastUpdated.set(new Date());
-      }
-    });
+    this.frameworkService.subscribeToFrameworkEvents(this.frameworkId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (event) => {
+          this.sseConnected.set(true);
+          this.frameworkResource.reload();
+          this.loadReviews();
+          this.lastUpdated.set(new Date());
+        },
+        error: (err) => {
+          console.error('SSE stream error:', err);
+          this.sseConnected.set(false);
+        }
+      });
   }
 
   ngOnDestroy(): void {
-    this.pollSubscription?.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadReviews(): void {

@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { resource } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable, Subject } from 'rxjs';
 import { Framework } from '../models/framework.model';
+import { FrameworkEvent } from '../models/framework-event.model';
 
 export interface CreateFrameworkRequest {
   name: string;
@@ -68,5 +69,33 @@ export class FrameworkService {
 
   fetchFrameworkTypes(): Promise<string[]> {
     return lastValueFrom(this.http.get<string[]>(`${this.apiUrl}/types`));
+  }
+
+  subscribeToFrameworkEvents(id: number): Observable<FrameworkEvent> {
+    const subject = new Subject<FrameworkEvent>();
+    const eventSource = new EventSource(`${this.apiUrl}/${id}/stream`);
+
+    eventSource.addEventListener('rating-update', (event) => {
+      try {
+        const data: FrameworkEvent = JSON.parse(event.data);
+        subject.next(data);
+      } catch (err) {
+        console.error('Failed to parse SSE event:', err);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      subject.error(error);
+      eventSource.close();
+    };
+
+    const originalUnsubscribe = subject.unsubscribe.bind(subject);
+    subject.unsubscribe = () => {
+      eventSource.close();
+      originalUnsubscribe();
+    };
+
+    return subject.asObservable();
   }
 }

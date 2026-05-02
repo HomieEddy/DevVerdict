@@ -3,10 +3,12 @@ package com.devverdict.catalog.controller;
 import com.devverdict.catalog.domain.Framework;
 import com.devverdict.catalog.dto.FrameworkRequest;
 import com.devverdict.catalog.repository.FrameworkRepository;
+import com.devverdict.catalog.service.SseBroadcastService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.net.URI;
 import java.util.List;
@@ -16,9 +18,12 @@ import java.util.List;
 public class FrameworkController {
 
     private final FrameworkRepository frameworkRepository;
+    private final SseBroadcastService sseBroadcastService;
 
-    public FrameworkController(FrameworkRepository frameworkRepository) {
+    public FrameworkController(FrameworkRepository frameworkRepository,
+                               SseBroadcastService sseBroadcastService) {
         this.frameworkRepository = frameworkRepository;
+        this.sseBroadcastService = sseBroadcastService;
     }
 
     @GetMapping
@@ -45,6 +50,11 @@ public class FrameworkController {
         return frameworkRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping(value = "/{id}/stream", produces = "text/event-stream")
+    public SseEmitter streamFrameworkUpdates(@PathVariable Long id) {
+        return sseBroadcastService.subscribe(id);
     }
 
     @PostMapping
