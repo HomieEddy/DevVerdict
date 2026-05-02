@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -7,7 +8,7 @@ import { Framework } from '../../models/framework.model';
 
 @Component({
   selector: 'app-framework-card',
-  imports: [RouterLink, MatCardModule, MatChipsModule, MatIconModule],
+  imports: [RouterLink, DecimalPipe, MatCardModule, MatChipsModule, MatIconModule],
   templateUrl: './framework-card.component.html',
   styleUrl: './framework-card.component.scss'
 })

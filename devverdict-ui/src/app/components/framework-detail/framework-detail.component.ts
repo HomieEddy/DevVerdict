@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, lastValueFrom, takeUntil } from 'rxjs';
@@ -20,6 +21,7 @@ import { Review } from '../../models/review.model';
   selector: 'app-framework-detail',
   imports: [
     RouterLink,
+    DecimalPipe,
     FormsModule,
     MatCardModule,
     MatChipsModule,
