@@ -1,0 +1,68 @@
+# Development override: enables hot-reload for Angular and live reload for Spring Boot services
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  angular-ui:
+    # Use the builder stage (has node_modules) instead of nginx
+    build:
+      context: ./devverdict-ui
+      target: build
+    volumes:
+      # Source code — changes reflect immediately in the container
+      - ./devverdict-ui/src:/app/src
+      - ./devverdict-ui/public:/app/public
+
+      # Config files — needed for ng serve
+      - ./devverdict-ui/angular.json:/app/angular.json
+      - ./devverdict-ui/tsconfig.json:/app/tsconfig.json
+      - ./devverdict-ui/tsconfig.app.json:/app/tsconfig.app.json
+      - ./devverdict-ui/tsconfig.spec.json:/app/tsconfig.spec.json
+      - ./devverdict-ui/proxy.conf.json:/app/proxy.conf.json
+      - ./devverdict-ui/proxy.conf.local.json:/app/proxy.conf.local.json
+
+      # Tailwind / PostCSS
+      - ./devverdict-ui/postcss.config.json:/app/postcss.config.json
+
+      # Preserve container node_modules (don't let host empty folder overwrite)
+      - /app/node_modules
+    command: >
+      sh -c "npm run start -- --host 0.0.0.0 --poll 2000 --disable-host-check"
+    ports:
+      - "4200:4200"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # --- Optional: Spring Boot live reload via DevTools ---
+  # Uncomment the sections below if you want live reload for backend services too.
+  # Requires: spring-boot-devtools in pom.xml + IDE auto-build or ./mvnw compile running on host.
+
+  # catalog-service:
+  #   volumes:
+  #     - ./catalog-service/src:/app/src
+  #   environment:
+  #     - SPRING_DEVTOOLS_RESTART_ENABLED=true
+
+  # review-service:
+  #   volumes:
+  #     - ./review-service/src:/app/src
+  #   environment:
+  #     - SPRING_DEVTOOLS_RESTART_ENABLED=true
+
+  # auth-service:
+  #   volumes:
+  #     - ./auth-service/src:/app/src
+  #   environment:
+  #     - SPRING_DEVTOOLS_RESTART_ENABLED=true
+
+  # gateway:
+  #   volumes:
+  #     - ./gateway/src:/app/src
+  #   environment:
+  #     - SPRING_DEVTOOLS_RESTART_ENABLED=true
