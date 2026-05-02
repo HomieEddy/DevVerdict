@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, lastValueFrom } from 'rxjs';
+import { resource } from '@angular/core';
 import { Review, CreateReviewRequest, Page } from '../models/review.model';
 
 @Injectable({
@@ -19,6 +20,12 @@ export class ReviewService {
 
   voteReview(reviewId: number, voteType: 'UPVOTE' | 'DOWNVOTE'): Observable<Review> {
     return this.http.post<Review>(`${this.apiUrl}/${reviewId}/vote`, { voteType });
+  }
+
+  getReviewsByUser(userId: number) {
+    return resource({
+      loader: () => lastValueFrom(this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`))
+    });
   }
 
   async createReview(request: CreateReviewRequest): Promise<Review> {
