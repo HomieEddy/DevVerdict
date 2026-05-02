@@ -21,12 +21,15 @@
     <!-- Reviews -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">My Reviews</h2>
-      @let reviewsRes = reviewsResource();
-      @if (reviewsRes) {
-        @let reviews = reviewsRes.value();
-        @if (reviews && reviews.length > 0) {
+      @if (reviewsLoading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      } @else if (reviewsError()) {
+        <p class="text-red-600 text-center py-4">{{ reviewsError() }}</p>
+      } @else {
+        @let reviewList = reviews();
+        @if (reviewList && reviewList.length > 0) {
           <div class="space-y-3">
-            @for (review of reviews; track review.id; let last = $last) {
+            @for (review of reviewList; track review.id; let last = $last) {
               <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
                 <div class="flex items-center gap-0.5 shrink-0">
                   @for (star of [1,2,3,4,5]; track star) {
@@ -38,6 +41,10 @@
                   }
                 </div>
                 <div class="flex-1 min-w-0">
+                  <a [routerLink]="['/framework', review.frameworkId]"
+                     class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors mb-1 inline-block">
+                    {{ getFrameworkName(review.frameworkId) }}
+                  </a>
                   <p class="text-sm text-gray-700">{{ review.comment }}</p>
                   <p class="text-xs text-gray-400 mt-1">{{ review.createdAt | date:'medium' }}</p>
                 </div>

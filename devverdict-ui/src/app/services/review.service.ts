@@ -22,10 +22,8 @@ export class ReviewService {
     return this.http.post<Review>(`${this.apiUrl}/${reviewId}/vote`, { voteType });
   }
 
-  getReviewsByUser(userId: number) {
-    return resource({
-      loader: () => lastValueFrom(this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`))
-    });
+  getReviewsByUser(userId: number): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`);
   }
 
   async createReview(request: CreateReviewRequest): Promise<Review> {
