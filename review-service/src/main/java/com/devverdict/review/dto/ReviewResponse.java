@@ -31,8 +31,8 @@ public record ReviewResponse(
             review.getCreatedAt(),
             review.getPros(),
             review.getCons(),
-            review.getHelpfulVotes(),
-            review.getNotHelpfulVotes()
+            review.getHelpfulVotes() != null ? review.getHelpfulVotes() : 0,
+            review.getNotHelpfulVotes() != null ? review.getNotHelpfulVotes() : 0
         );
     }
 }
