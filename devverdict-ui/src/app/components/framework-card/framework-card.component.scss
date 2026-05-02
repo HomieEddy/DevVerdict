@@ -1,26 +1,55 @@
 .framework-card {
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+
+    &.accent-primary {
+      background: linear-gradient(90deg, #1976d2, #42a5f5);
+    }
+
+    &.accent-accent {
+      background: linear-gradient(90deg, #e91e63, #f06292);
+    }
+
+    &.accent-warn {
+      background: linear-gradient(90deg, #f57c00, #ffb74d);
+    }
+
+    &:not(.accent-primary):not(.accent-accent):not(.accent-warn) {
+      background: linear-gradient(90deg, #757575, #bdbdbd);
+    }
   }
 
   mat-card-header {
-    padding-bottom: 0.5rem;
+    padding: 1rem 1rem 0.5rem;
   }
 
   mat-card-title {
-    font-size: 1.25rem;
-    font-weight: 500;
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   mat-card-subtitle {
-    margin-top: 0.25rem;
+    margin-top: 0.375rem;
   }
 
   mat-card-content {
@@ -28,6 +57,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    padding: 0 1rem 1rem;
   }
 }
 
@@ -49,8 +79,9 @@
 
   .rating-value {
     margin-left: 0.5rem;
-    font-weight: 500;
-    color: rgba(0, 0, 0, 0.6);
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.7);
+    font-size: 1rem;
   }
 }
 
@@ -62,5 +93,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.5;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 0.95rem;
+}
+
+.review-count {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: rgba(0, 0, 0, 0.45);
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
 }

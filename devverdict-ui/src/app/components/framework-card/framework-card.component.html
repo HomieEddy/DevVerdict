@@ -1,4 +1,6 @@
 <mat-card class="framework-card" [routerLink]="['/framework', framework().id]">
+  <div class="card-accent" [class]="'accent-' + getTypeColor(framework().type)"></div>
+
   <mat-card-header>
     <mat-card-title>{{ framework().name }}</mat-card-title>
     <mat-card-subtitle>
@@ -20,5 +22,9 @@
       <span class="rating-value">{{ framework().averageRating }}</span>
     </div>
     <p class="description">{{ framework().description }}</p>
+    <div class="review-count">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <span>{{ framework().reviewCount || 0 }} review{{ (framework().reviewCount || 0) === 1 ? '' : 's' }}</span>
+    </div>
   </mat-card-content>
 </mat-card>
