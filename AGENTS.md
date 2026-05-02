@@ -67,13 +67,13 @@ This file contains context and workflow guidance for AI agents working on the De
 
 ## Constraints & Decisions
 
-- **Anonymous reviews for v1** — No authentication. Rate limiting and validation are the v1 spam defense.
-- **Seed script for catalog data** — No admin panel in v1. Use SQL seed script or Flyway migration.
+- **Authentication required for reviews** — Since v2.0 (Phase 8), users must log in to submit, edit, or vote on reviews.
+- **Admin panel for catalog management** — Since v2.0 (Phase 10), admins can add/edit/remove frameworks via the UI.
 - **Angular Material for UI** — Stick to Material Design defaults. Custom theming can be deferred.
 - **Kafka is the message broker** — Do not substitute RabbitMQ or Redis Pub/Sub. KRaft mode, topic `review-updates`.
-- **No WebSocket in v1** — Async updates via Kafka + page refresh. WebSocket deferred to v2.
+- **SSE for real-time updates** — Server-Sent Events deliver rating updates to framework detail pages in real-time (Phase 11).
 - **Database-per-service** — No shared schema, no cross-service foreign keys.
-- **Gateway stays "dumb" in v1** — Route + CORS only. No auth, rate limiting, or circuit breakers in v1.
+- **Gateway hardening** — Rate limiting, circuit breakers, JWT validation, and Redis-backed session caching are all active (Phase 9).
 
 ## Critical Pitfalls to Avoid
 
@@ -93,11 +93,12 @@ This file contains context and workflow guidance for AI agents working on the De
 
 ## Current State
 
-- **Milestone:** v1
-- **Phase:** Ready to start Phase 1
-- **Requirements:** 19 v1 requirements mapped to 7 phases
+- **Milestone:** v2.0 — COMPLETE (shipped 2026-05-02)
+- **Phases:** All 12 phases complete (v1.0 MVP: Phases 1-7, v2.0: Phases 8-12)
+- **Requirements:** 25/25 v2.0 requirements complete (100%)
 - **Roadmap:** `.planning/ROADMAP.md`
 - **Requirements doc:** `.planning/REQUIREMENTS.md`
+- **Next:** Milestone v2.0 archive / v3.0 planning
 
 ---
-*Last updated: 2025-04-29 after project initialization*
+*Last updated: 2026-05-02 after Phase 11 completion and v2.0 ship*
