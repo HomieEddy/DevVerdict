@@ -38,10 +38,10 @@ public class Review {
     @Column(name = "cons", length = 500)
     private String cons;
 
-    @Column(name = "helpful_votes", nullable = false)
+    @Column(name = "helpful_votes")
     private Integer helpfulVotes = 0;
 
-    @Column(name = "not_helpful_votes", nullable = false)
+    @Column(name = "not_helpful_votes")
     private Integer notHelpfulVotes = 0;
 
     public Review() {
@@ -184,18 +184,18 @@ public class Review {
     }
 
     public void incrementHelpfulVotes() {
-        this.helpfulVotes++;
+        this.helpfulVotes = (this.helpfulVotes != null ? this.helpfulVotes : 0) + 1;
     }
 
     public void decrementHelpfulVotes() {
-        this.helpfulVotes = Math.max(0, this.helpfulVotes - 1);
+        this.helpfulVotes = Math.max(0, (this.helpfulVotes != null ? this.helpfulVotes : 0) - 1);
     }
 
     public void incrementNotHelpfulVotes() {
-        this.notHelpfulVotes++;
+        this.notHelpfulVotes = (this.notHelpfulVotes != null ? this.notHelpfulVotes : 0) + 1;
     }
 
     public void decrementNotHelpfulVotes() {
-        this.notHelpfulVotes = Math.max(0, this.notHelpfulVotes - 1);
+        this.notHelpfulVotes = Math.max(0, (this.notHelpfulVotes != null ? this.notHelpfulVotes : 0) - 1);
     }
 }
