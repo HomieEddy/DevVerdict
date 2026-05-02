@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, lastValueFrom } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FrameworkService } from '../../services/framework.service';
 import { ReviewService } from '../../services/review.service';
 import { AuthService } from '../../services/auth.service';
+import { Review } from '../../models/review.model';
 
 @Component({
   selector: 'app-framework-detail',
@@ -43,9 +44,18 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
 
   readonly frameworkId = Number(this.route.snapshot.paramMap.get('id'));
   readonly frameworkResource = this.frameworkService.getFrameworkById(this.frameworkId);
-  readonly reviewsResource = this.reviewService.getReviewsByFramework(this.frameworkId);
+
+  readonly reviews = signal<Review[]>([]);
+  readonly reviewsLoading = signal(false);
+  readonly reviewsError = signal<string | null>(null);
+  readonly currentPage = signal(0);
+  readonly pageSize = signal(10);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
 
   readonly comment = signal('');
+  readonly pros = signal('');
+  readonly cons = signal('');
   readonly rating = signal(0);
   readonly hoveredRating = signal(0);
   readonly isSubmitting = signal(false);
@@ -58,10 +68,11 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.lastUpdated.set(new Date());
+    this.loadReviews();
     this.pollSubscription = interval(this.pollInterval).subscribe(() => {
       if (!this.isSubmitting()) {
         this.frameworkResource.reload();
-        this.reviewsResource.reload();
+        this.loadReviews();
         this.lastUpdated.set(new Date());
       }
     });
@@ -71,7 +82,32 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
     this.pollSubscription?.unsubscribe();
   }
 
-  canEditReview(review: any): boolean {
+  private loadReviews(): void {
+    this.reviewsLoading.set(true);
+    this.reviewsError.set(null);
+    this.reviewService.getReviewsByFramework(this.frameworkId, this.currentPage(), this.pageSize())
+      .subscribe({
+        next: (page) => {
+          this.reviews.set(page.content);
+          this.totalElements.set(page.totalElements);
+          this.totalPages.set(page.totalPages);
+          this.reviewsLoading.set(false);
+        },
+        error: (err) => {
+          this.reviewsError.set(err.error?.message || 'Failed to load reviews');
+          this.reviewsLoading.set(false);
+        }
+      });
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadReviews();
+    }
+  }
+
+  canEditReview(review: Review): boolean {
     return review.userId === this.currentUserId();
   }
 
@@ -91,6 +127,10 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
       case 'runtime': return 'warn';
       default: return '';
     }
+  }
+
+  getInitials(username: string | undefined): string {
+    return username ? username.charAt(0).toUpperCase() : '?';
   }
 
   setRating(value: number): void {
@@ -129,14 +169,18 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
         comment: currentComment.trim(),
         rating: currentRating,
         userId: this.currentUserId(),
-        username: this.authService.currentUser()?.username
+        username: this.authService.currentUser()?.username,
+        pros: this.pros().trim() || undefined,
+        cons: this.cons().trim() || undefined
       });
 
       this.comment.set('');
+      this.pros.set('');
+      this.cons.set('');
       this.rating.set(0);
       this.showSuccess('Review submitted successfully!');
 
-      this.reviewsResource.reload();
+      this.loadReviews();
       this.frameworkResource.reload();
       this.lastUpdated.set(new Date());
     } catch (err: any) {
@@ -150,10 +194,25 @@ export class FrameworkDetailComponent implements OnInit, OnDestroy {
     try {
       await this.reviewService.deleteReview(reviewId);
       this.showSuccess('Review deleted successfully!');
-      this.reviewsResource.reload();
+      this.loadReviews();
       this.frameworkResource.reload();
     } catch (err: any) {
       this.showError(err.error?.message || 'Failed to delete review.');
+    }
+  }
+
+  async voteReview(reviewId: number, voteType: 'UPVOTE' | 'DOWNVOTE'): Promise<void> {
+    if (!this.isLoggedIn()) {
+      this.showError('Please log in to vote on reviews.');
+      this.router.navigate(['/login']);
+      return;
+    }
+    try {
+      await lastValueFrom(this.reviewService.voteReview(reviewId, voteType));
+      this.loadReviews();
+      this.showSuccess('Vote recorded!');
+    } catch (err: any) {
+      this.showError(err.error?.message || 'Failed to vote. Please try again.');
     }
   }
 

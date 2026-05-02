@@ -79,7 +79,7 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldCreateReviewAndReturn201() throws Exception {
-        ReviewRequest request = new ReviewRequest(1L, "Great framework!", 5, 1L, "testuser");
+        ReviewRequest request = new ReviewRequest(1L, "Great framework!", 5, 1L, "testuser", null, null);
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -94,7 +94,7 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldPublishReviewCreatedEventToKafka() throws Exception {
-        ReviewRequest request = new ReviewRequest(2L, "Solid choice for backend", 4, 2L, "testuser");
+        ReviewRequest request = new ReviewRequest(2L, "Solid choice for backend", 4, 2L, "testuser", null, null);
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -112,9 +112,8 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldReturnReviewsForFrameworkOrderedByNewestFirst() throws Exception {
-        // Create two reviews for the same framework
-        ReviewRequest request1 = new ReviewRequest(3L, "First review", 3, 3L, "testuser");
-        ReviewRequest request2 = new ReviewRequest(3L, "Second review", 4, 3L, "testuser");
+        ReviewRequest request1 = new ReviewRequest(3L, "First review", 3, 3L, "testuser", null, null);
+        ReviewRequest request2 = new ReviewRequest(3L, "Second review", 4, 3L, "testuser", null, null);
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -122,7 +121,7 @@ class ReviewControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(request1)))
                 .andExpect(status().isCreated());
 
-        Thread.sleep(10); // Ensure different timestamps
+        Thread.sleep(10);
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -132,21 +131,21 @@ class ReviewControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reviews/framework/3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].comment").value("Second review"))
-                .andExpect(jsonPath("$[1].comment").value("First review"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].comment").value("Second review"))
+                .andExpect(jsonPath("$.content[1].comment").value("First review"));
     }
 
     @Test
     void shouldReturnEmptyListWhenNoReviewsForFramework() throws Exception {
         mockMvc.perform(get("/api/reviews/framework/999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     @Test
     void shouldRejectInvalidReviewRequest() throws Exception {
-        ReviewRequest invalidRequest = new ReviewRequest(null, "", 6, 1L, "testuser");
+        ReviewRequest invalidRequest = new ReviewRequest(null, "", 6, 1L, "testuser", null, null);
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -157,7 +156,7 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldHideReviewWhenAdmin() throws Exception {
-        ReviewRequest request = new ReviewRequest(10L, "To be hidden", 3, 10L, "testuser");
+        ReviewRequest request = new ReviewRequest(10L, "To be hidden", 3, 10L, "testuser", null, null);
 
         String response = mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -178,7 +177,7 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldRejectModerationWhenNotAdmin() throws Exception {
-        ReviewRequest request = new ReviewRequest(11L, "Normal review", 4, 11L, "testuser");
+        ReviewRequest request = new ReviewRequest(11L, "Normal review", 4, 11L, "testuser", null, null);
 
         String response = mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -198,7 +197,7 @@ class ReviewControllerIntegrationTest {
 
     @Test
     void shouldExcludeHiddenReviewsFromPublicList() throws Exception {
-        ReviewRequest request = new ReviewRequest(12L, "Hidden review", 2, 12L, "testuser");
+        ReviewRequest request = new ReviewRequest(12L, "Hidden review", 2, 12L, "testuser", null, null);
 
         String response = mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -217,6 +216,94 @@ class ReviewControllerIntegrationTest {
 
         mockMvc.perform(get("/api/reviews/framework/12"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    void shouldReturnPaginatedReviewsForFramework() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            ReviewRequest request = new ReviewRequest(20L, "Review " + i, 4, 20L, "testuser", "Great docs", "Steep learning");
+            mockMvc.perform(post("/api/reviews")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("X-User-Id", "20")
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated());
+        }
+
+        mockMvc.perform(get("/api/reviews/framework/20?page=0&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(0));
+    }
+
+    @Test
+    void shouldCreateReviewWithProsAndCons() throws Exception {
+        ReviewRequest request = new ReviewRequest(21L, "Detailed review", 5, 21L, "testuser", "Fast and reliable", "Limited ecosystem");
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "21")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pros").value("Fast and reliable"))
+                .andExpect(jsonPath("$.cons").value("Limited ecosystem"))
+                .andExpect(jsonPath("$.helpfulVotes").value(0))
+                .andExpect(jsonPath("$.notHelpfulVotes").value(0));
+    }
+
+    @Test
+    void shouldVoteReviewAsHelpful() throws Exception {
+        ReviewRequest request = new ReviewRequest(22L, "Vote target", 3, 22L, "testuser", null, null);
+        String response = mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "22")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Long reviewId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(post("/api/reviews/{id}/vote", reviewId)
+                        .header("X-User-Id", "22")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"voteType\": \"UPVOTE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.helpfulVotes").value(1))
+                .andExpect(jsonPath("$.notHelpfulVotes").value(0));
+    }
+
+    @Test
+    void shouldToggleOffVoteWhenSameVoteTypeSubmittedAgain() throws Exception {
+        ReviewRequest request = new ReviewRequest(23L, "Toggle target", 3, 23L, "testuser", null, null);
+        String response = mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", "23")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Long reviewId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(post("/api/reviews/{id}/vote", reviewId)
+                        .header("X-User-Id", "23")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"voteType\": \"UPVOTE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.helpfulVotes").value(1));
+
+        mockMvc.perform(post("/api/reviews/{id}/vote", reviewId)
+                        .header("X-User-Id", "23")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"voteType\": \"UPVOTE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.helpfulVotes").value(0));
+    }
+
+    @Test
+    void shouldRejectVoteWithoutUserId() throws Exception {
+        mockMvc.perform(post("/api/reviews/1/vote")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"voteType\": \"UPVOTE\"}"))
+                .andExpect(status().isUnauthorized());
     }
 }

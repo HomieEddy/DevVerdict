@@ -17,6 +17,12 @@ public record ReviewRequest(
 
     Long userId,
 
-    String username
+    String username,
+
+    @Size(max = 500, message = "Pros must be at most 500 characters")
+    String pros,
+
+    @Size(max = 500, message = "Cons must be at most 500 characters")
+    String cons
 ) {
 }

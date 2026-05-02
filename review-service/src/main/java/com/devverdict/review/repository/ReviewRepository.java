@@ -1,6 +1,8 @@
 package com.devverdict.review.repository;
 
 import com.devverdict.review.domain.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +12,8 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByFrameworkIdAndHiddenFalseOrderByCreatedAtDesc(Long frameworkId);
+
+    Page<Review> findByFrameworkIdAndHiddenFalseOrderByCreatedAtDesc(Long frameworkId, Pageable pageable);
 
     List<Review> findByUserIdAndHiddenFalseOrderByCreatedAtDesc(Long userId);
 

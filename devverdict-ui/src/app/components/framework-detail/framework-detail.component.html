@@ -100,6 +100,32 @@
             <mat-hint align="end">{{ comment().length }} / 1000</mat-hint>
           </mat-form-field>
 
+          <mat-form-field class="pros-field" appearance="outline">
+            <mat-label>Pros (optional)</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="pros"
+              rows="2"
+              placeholder="What do you like about this technology?"
+              maxlength="500"
+              [disabled]="isSubmitting()"
+            ></textarea>
+            <mat-hint align="end">{{ pros().length }} / 500</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="cons-field" appearance="outline">
+            <mat-label>Cons (optional)</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="cons"
+              rows="2"
+              placeholder="What could be improved?"
+              maxlength="500"
+              [disabled]="isSubmitting()"
+            ></textarea>
+            <mat-hint align="end">{{ cons().length }} / 500</mat-hint>
+          </mat-form-field>
+
           <button
             mat-raised-button
             color="primary"
@@ -121,18 +147,35 @@
         <mat-card-title>Reviews</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        @if (reviewsResource.isLoading()) {
+        @if (reviewsLoading()) {
           <div class="reviews-loading">
             <mat-progress-bar mode="indeterminate"></mat-progress-bar>
           </div>
-        } @else if (reviewsResource.error()) {
-          <p class="reviews-error">Unable to load reviews.</p>
+        } @else if (reviewsError()) {
+          <p class="reviews-error">{{ reviewsError() }}</p>
         } @else {
-          @let reviews = reviewsResource.value();
-          @if (reviews && reviews.length > 0) {
-            @for (review of reviews; track review.id) {
-              <div class="review-item">
-                <div class="review-header">
+          @let reviewList = reviews();
+          @if (reviewList && reviewList.length > 0) {
+            @for (review of reviewList; track review.id) {
+              <mat-card class="review-card">
+                <mat-card-header>
+                  <div mat-card-avatar class="review-avatar">
+                    {{ getInitials(review.username) }}
+                  </div>
+                  <mat-card-title>
+                    @if (review.username) {
+                      <span class="review-author">{{ review.username }}</span>
+                      @if (review.userId) {
+                        <mat-chip class="verified-badge" highlighted color="primary">Verified</mat-chip>
+                      }
+                    } @else {
+                      <span class="review-author anonymous">Anonymous</span>
+                    }
+                  </mat-card-title>
+                  <mat-card-subtitle>{{ formatDate(review.createdAt) }}</mat-card-subtitle>
+                </mat-card-header>
+
+                <mat-card-content>
                   <div class="review-stars">
                     @for (star of [1, 2, 3, 4, 5]; track star) {
                       <mat-icon [class.filled]="star <= review.rating">
@@ -140,22 +183,54 @@
                       </mat-icon>
                     }
                   </div>
-                  <div class="review-meta">
-                    @if (review.username) {
-                      <span class="review-author">{{ review.username }}</span>
-                    }
-                    <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+
+                  <p class="review-comment">{{ review.comment }}</p>
+
+                  @if (review.pros || review.cons) {
+                    <div class="structured-feedback">
+                      @if (review.pros) {
+                        <div class="pros-section">
+                          <strong><mat-icon class="pros-icon">thumb_up</mat-icon> Pros</strong>
+                          <p>{{ review.pros }}</p>
+                        </div>
+                      }
+                      @if (review.cons) {
+                        <div class="cons-section">
+                          <strong><mat-icon class="cons-icon">thumb_down</mat-icon> Cons</strong>
+                          <p>{{ review.cons }}</p>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="review-actions">
+                    <button mat-button (click)="voteReview(review.id, 'UPVOTE')">
+                      <mat-icon>thumb_up</mat-icon>
+                      Helpful ({{ review.helpfulVotes || 0 }})
+                    </button>
+                    <button mat-button (click)="voteReview(review.id, 'DOWNVOTE')">
+                      <mat-icon>thumb_down</mat-icon>
+                      Not Helpful ({{ review.notHelpfulVotes || 0 }})
+                    </button>
                     @if (canEditReview(review)) {
                       <button mat-icon-button color="warn" (click)="deleteReview(review.id)" title="Delete review">
                         <mat-icon>delete</mat-icon>
                       </button>
                     }
                   </div>
-                </div>
-                <p class="review-comment">{{ review.comment }}</p>
-                @if (!$last) {
-                  <mat-divider></mat-divider>
-                }
+                </mat-card-content>
+              </mat-card>
+            }
+
+            @if (totalPages() > 1) {
+              <div class="pagination-controls">
+                <button mat-stroked-button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
+                  <mat-icon>chevron_left</mat-icon> Previous
+                </button>
+                <span class="page-info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+                <button mat-stroked-button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">
+                  Next <mat-icon>chevron_right</mat-icon>
+                </button>
               </div>
             }
           } @else {

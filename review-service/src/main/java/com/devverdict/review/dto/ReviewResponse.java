@@ -12,7 +12,11 @@ public record ReviewResponse(
     Long userId,
     String username,
     Boolean hidden,
-    Instant createdAt
+    Instant createdAt,
+    String pros,
+    String cons,
+    Integer helpfulVotes,
+    Integer notHelpfulVotes
 ) {
 
     public static ReviewResponse fromEntity(Review review) {
@@ -24,7 +28,11 @@ public record ReviewResponse(
             review.getUserId(),
             review.getUsername(),
             review.getHidden(),
-            review.getCreatedAt()
+            review.getCreatedAt(),
+            review.getPros(),
+            review.getCons(),
+            review.getHelpfulVotes() != null ? review.getHelpfulVotes() : 0,
+            review.getNotHelpfulVotes() != null ? review.getNotHelpfulVotes() : 0
         );
     }
 }
