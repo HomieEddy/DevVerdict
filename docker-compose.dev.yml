@@ -26,7 +26,7 @@ services:
       # Preserve container node_modules (don't let host empty folder overwrite)
       - /app/node_modules
     command: >
-      sh -c "npm run start -- --host 0.0.0.0 --poll 2000 --disable-host-check"
+      sh -c "npm run start -- --host 0.0.0.0 --poll 2000"
     ports:
       - "4200:4200"
     depends_on:
