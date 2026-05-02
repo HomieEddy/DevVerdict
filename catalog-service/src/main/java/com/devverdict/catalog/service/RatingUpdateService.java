@@ -1,6 +1,8 @@
 package com.devverdict.catalog.service;
 
+import com.devverdict.catalog.domain.Framework;
 import com.devverdict.catalog.domain.ProcessedEvent;
+import com.devverdict.catalog.dto.FrameworkRatingEvent;
 import com.devverdict.catalog.dto.ReviewCreatedEvent;
 import com.devverdict.catalog.repository.FrameworkRepository;
 import com.devverdict.catalog.repository.ProcessedEventRepository;
@@ -18,11 +20,14 @@ public class RatingUpdateService {
 
     private final FrameworkRepository frameworkRepository;
     private final ProcessedEventRepository processedEventRepository;
+    private final SseBroadcastService sseBroadcastService;
 
     public RatingUpdateService(FrameworkRepository frameworkRepository,
-                               ProcessedEventRepository processedEventRepository) {
+                               ProcessedEventRepository processedEventRepository,
+                               SseBroadcastService sseBroadcastService) {
         this.frameworkRepository = frameworkRepository;
         this.processedEventRepository = processedEventRepository;
+        this.sseBroadcastService = sseBroadcastService;
     }
 
     @KafkaListener(topics = TOPIC, groupId = "catalog-rating-consumer")
@@ -50,5 +55,16 @@ public class RatingUpdateService {
         processedEventRepository.save(new ProcessedEvent(event.eventId()));
         logger.info("Updated average rating for framework id={} with rating={}, event id={}",
             event.frameworkId(), event.rating(), eventIdStr);
+
+        frameworkRepository.findById(event.frameworkId()).ifPresent(framework -> {
+            FrameworkRatingEvent ratingEvent = new FrameworkRatingEvent(
+                "REVIEW_CREATED",
+                framework.getId(),
+                framework.getAverageRating(),
+                framework.getReviewCount()
+            );
+            sseBroadcastService.broadcast(framework.getId(), ratingEvent);
+            logger.info("Broadcasted SSE rating update for framework id={}", framework.getId());
+        });
     }
 }
