@@ -1,6 +1,8 @@
 package com.devverdict.review.config;
 
+import com.devverdict.review.domain.OutboxEvent;
 import com.devverdict.review.domain.Review;
+import com.devverdict.review.repository.OutboxEventRepository;
 import com.devverdict.review.repository.ReviewRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
@@ -24,22 +27,44 @@ public class ReviewDataSeeder implements CommandLineRunner {
     private static final int USER_COUNT = 16; // admin (1) + 15 dummy users
 
     private final ReviewRepository reviewRepository;
+    private final OutboxEventRepository outboxRepository;
     private final Random random = new Random(42); // seeded for reproducibility
 
-    public ReviewDataSeeder(ReviewRepository reviewRepository) {
+    public ReviewDataSeeder(ReviewRepository reviewRepository,
+                            OutboxEventRepository outboxRepository) {
         this.reviewRepository = reviewRepository;
+        this.outboxRepository = outboxRepository;
     }
 
     @Override
     public void run(String... args) {
-        if (reviewRepository.count() > 0) {
-            logger.info("Reviews already exist ({} found), skipping seed", reviewRepository.count());
+        long existingReviews = reviewRepository.count();
+        long existingOutbox = outboxRepository.count();
+
+        if (existingReviews > 0 && existingOutbox > 0) {
+            logger.info("Reviews ({}) and outbox events ({}) already exist, skipping seed", existingReviews, existingOutbox);
             return;
         }
 
-        List<Review> reviews = generateReviews();
-        reviewRepository.saveAll(reviews);
-        logger.info("Seeded {} demo reviews across {} frameworks", reviews.size(), FRAMEWORK_COUNT);
+        if (existingReviews == 0) {
+            List<Review> reviews = generateReviews();
+            reviewRepository.saveAll(reviews);
+            logger.info("Seeded {} demo reviews across {} frameworks", reviews.size(), FRAMEWORK_COUNT);
+            existingReviews = reviews.size();
+        } else {
+            logger.info("Reviews already exist ({} found), skipping review seed", existingReviews);
+        }
+
+        if (existingOutbox == 0) {
+            List<Review> allReviews = reviewRepository.findAll();
+            List<OutboxEvent> outboxEvents = allReviews.stream()
+                .map(this::toOutboxEvent)
+                .toList();
+            if (!outboxEvents.isEmpty()) {
+                outboxRepository.saveAll(outboxEvents);
+                logger.info("Created {} outbox events for Kafka publishing", outboxEvents.size());
+            }
+        }
     }
 
     private List<Review> generateReviews() {
@@ -83,6 +108,19 @@ public class ReviewDataSeeder implements CommandLineRunner {
         review.setNotHelpfulVotes(random.nextInt(8));
 
         return review;
+    }
+
+    private OutboxEvent toOutboxEvent(Review review) {
+        UUID eventId = UUID.randomUUID();
+        String payload = String.format(
+            "{\"eventId\":\"%s\",\"reviewId\":%d,\"frameworkId\":%d,\"rating\":%d,\"createdAt\":\"%s\"}",
+            eventId,
+            review.getId() != null ? review.getId() : 0,
+            review.getFrameworkId(),
+            review.getRating(),
+            review.getCreatedAt().toString()
+        );
+        return new OutboxEvent("ReviewCreated", review.getFrameworkId().toString(), payload);
     }
 
     private int generateWeightedRating() {
