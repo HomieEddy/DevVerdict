@@ -1,39 +1,49 @@
 @if (isLoading()) {
-  <div class="loading-container">
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-    <p>Loading frameworks...</p>
+  <div class="flex flex-col items-center justify-center min-h-[300px] gap-4">
+    <mat-progress-bar mode="indeterminate" class="w-full max-w-md"></mat-progress-bar>
+    <p class="text-gray-500">Loading frameworks...</p>
   </div>
 } @else if (error()) {
-  <div class="error-container">
-    <p>{{ error() }}</p>
-    <button (click)="showError(error()!)">
+  <div class="flex flex-col items-center justify-center min-h-[300px] gap-4">
+    <p class="text-red-600 text-lg">{{ error() }}</p>
+    <button (click)="showError(error()!)" class="px-4 py-2 border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors text-sm">
       Show Details
     </button>
   </div>
 } @else {
-  <div class="catalog-hero">
-    <div class="hero-content">
-      <h1 class="hero-title">Explore Developer Tools</h1>
-      <p class="hero-subtitle">Browse programming languages, frameworks, and tools rated by the community</p>
+  <!-- Hero -->
+  <div class="relative bg-gradient-to-br from-indigo-900 via-blue-900 to-indigo-800 px-6 py-16 -mx-4 sm:-mx-6 lg:-mx-8 mb-8 overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-400 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+        Explore Developer Tools
+      </h1>
+      <p class="text-lg text-blue-100/80 max-w-xl mx-auto">
+        Browse programming languages, frameworks, and tools rated by the developer community
+      </p>
     </div>
   </div>
 
-  <div class="search-filter-bar">
-    <div class="search-row">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
+  <!-- Search & Filters -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+    <div class="flex flex-wrap gap-4 items-end">
+      <mat-form-field appearance="outline" class="flex-1 min-w-[240px]">
+        <mat-icon matPrefix class="text-gray-400">search</mat-icon>
         <input matInput
                [ngModel]="searchTerm()"
                (ngModelChange)="onSearchChange($event)"
                placeholder="Search frameworks...">
         @if (searchTerm()) {
-          <button mat-icon-button matSuffix (click)="clearSearch()">
+          <button mat-icon-button matSuffix (click)="clearSearch()" class="text-gray-400 hover:text-gray-600">
             <mat-icon>close</mat-icon>
           </button>
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="type-field">
+      <mat-form-field appearance="outline" class="w-40">
         <mat-label>Type</mat-label>
         <mat-select [value]="selectedType()" (selectionChange)="onTypeChange($event.value)">
           <mat-option value="">All Types</mat-option>
@@ -43,9 +53,9 @@
         </mat-select>
       </mat-form-field>
 
-      <div class="rating-filter">
-        <span>Min Rating: {{ minRating() ?? 0 }}</span>
-        <mat-slider min="0" max="5" step="0.5" discrete>
+      <div class="flex items-center gap-3 min-w-[200px] pb-4">
+        <span class="text-sm text-gray-500 whitespace-nowrap">Min Rating: {{ minRating() ?? 0 }}</span>
+        <mat-slider min="0" max="5" step="0.5" discrete class="w-full">
           <input matSliderThumb
                  [value]="minRating() ?? 0"
                  (change)="onSliderChange($event)">
@@ -53,30 +63,30 @@
       </div>
 
       @if (hasActiveFilters()) {
-        <button mat-stroked-button class="clear-btn" (click)="clearFilters()">
+        <button mat-stroked-button (click)="clearFilters()" class="mb-4">
           <mat-icon>filter_alt_off</mat-icon>
           Clear
         </button>
       }
     </div>
 
-    <div class="results-meta">
-      <span class="results-count">{{ totalCount() }} framework{{ totalCount() === 1 ? '' : 's' }} found</span>
+    <div class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+      <span class="text-sm text-gray-500">{{ totalCount() }} framework{{ totalCount() === 1 ? '' : 's' }} found</span>
       @if (hasActiveFilters()) {
-        <span class="active-filters-badge">Filters active</span>
+        <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">Filters active</span>
       }
     </div>
   </div>
 
   @let frameworkList = paginatedFrameworks();
   @if (totalCount() === 0) {
-    <div class="empty-state">
-      <mat-icon class="empty-icon">search_off</mat-icon>
-      <p>No frameworks match your search.</p>
+    <div class="flex flex-col items-center justify-center py-16 px-6 bg-white rounded-2xl shadow-sm border border-gray-100 text-center">
+      <mat-icon class="text-6xl w-16 h-16 text-gray-300 mb-4">search_off</mat-icon>
+      <p class="text-lg text-gray-500 mb-4">No frameworks match your search.</p>
       <button mat-raised-button color="primary" (click)="clearFilters()">Clear all filters</button>
     </div>
   } @else {
-    <div class="catalog-grid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-6">
       @for (framework of frameworkList; track framework.id) {
         <app-framework-card [framework]="framework" />
       }
@@ -88,7 +98,8 @@
       [pageIndex]="pageIndex()"
       [pageSizeOptions]="pageSizeOptions"
       [showFirstLastButtons]="true"
-      (page)="onPageChange($event)">
+      (page)="onPageChange($event)"
+      class="bg-transparent">
     </mat-paginator>
   }
 }

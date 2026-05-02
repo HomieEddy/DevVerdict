@@ -14,9 +14,12 @@ import { ReviewModerationComponent } from './review-moderation/review-moderation
     ReviewModerationComponent
   ],
   template: `
-    <div class="admin-container">
-      <h1>Admin Dashboard</h1>
-      <mat-tab-group>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
+        <p class="text-gray-500 mt-1">Manage frameworks and moderate reviews</p>
+      </div>
+      <mat-tab-group class="admin-tabs">
         <mat-tab label="Frameworks">
           <app-framework-management></app-framework-management>
         </mat-tab>
@@ -27,13 +30,8 @@ import { ReviewModerationComponent } from './review-moderation/review-moderation
     </div>
   `,
   styles: [`
-    .admin-container {
-      padding: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    h1 {
-      margin-bottom: 24px;
+    ::ng-deep .admin-tabs .mat-mdc-tab-body-wrapper {
+      padding-top: 24px;
     }
   `]
 })

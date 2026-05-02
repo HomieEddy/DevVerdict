@@ -1,3 +1,6 @@
+/* Tailwind CSS v4 */
+@use "tailwindcss";
+
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.
@@ -36,7 +39,5 @@ body {
   margin: 0;
   height: 100%;
 }
-/* Tailwind CSS v4 */
-@import "tailwindcss";
 
 /* You can add global styles to this file, and also import other style files */

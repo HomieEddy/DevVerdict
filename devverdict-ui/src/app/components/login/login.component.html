@@ -1,19 +1,27 @@
-<div class="auth-container">
-  <mat-card class="auth-card">
-    <mat-card-header>
-      <mat-card-title>Login</mat-card-title>
-    </mat-card-header>
+<div class="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-xl mb-4">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">Welcome back</h1>
+      <p class="text-gray-500 mt-1">Sign in to your DevVerdict account</p>
+    </div>
 
-    <mat-card-content>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width">
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+        <mat-form-field appearance="outline" class="w-full">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" placeholder="your@email.com">
+          <input matInput type="email" formControlName="email" placeholder="you@example.com">
           <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required</mat-error>
           <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Please enter a valid email</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="w-full">
           <mat-label>Password</mat-label>
           <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password">
           <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
@@ -23,16 +31,19 @@
           <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">Password must be at least 8 characters</mat-error>
         </mat-form-field>
 
-        <div class="error-message" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+        @if (errorMessage()) {
+          <div class="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{{ errorMessage() }}</div>
+        }
 
-        <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="loginForm.invalid">
-          Login
+        <button mat-raised-button color="primary" type="submit" class="w-full !h-11" [disabled]="loginForm.invalid">
+          Sign In
         </button>
       </form>
-    </mat-card-content>
 
-    <mat-card-actions>
-      <p>Don't have an account? <a routerLink="/register">Register</a></p>
-    </mat-card-actions>
-  </mat-card>
+      <div class="mt-6 text-center text-sm text-gray-500">
+        Don't have an account?
+        <a routerLink="/register" class="text-indigo-600 hover:text-indigo-700 font-medium ml-1">Create one</a>
+      </div>
+    </div>
+  </div>
 </div>

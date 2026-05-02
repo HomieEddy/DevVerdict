@@ -1,251 +1,244 @@
 @if (frameworkResource.isLoading()) {
-  <div class="loading-container">
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-    <p>Loading framework details...</p>
+  <div class="flex flex-col items-center justify-center min-h-[300px] gap-4">
+    <mat-progress-bar mode="indeterminate" class="w-full max-w-md"></mat-progress-bar>
+    <p class="text-gray-500">Loading framework details...</p>
   </div>
 } @else if (frameworkResource.error()) {
-  <div class="error-container">
-    <mat-icon class="error-icon">error_outline</mat-icon>
-    <p>Framework not found or unavailable.</p>
-    <a mat-stroked-button routerLink="/">
+  <div class="flex flex-col items-center justify-center min-h-[300px] gap-4">
+    <mat-icon class="text-5xl w-12 h-12 text-red-500">error_outline</mat-icon>
+    <p class="text-red-600 text-lg">Framework not found or unavailable.</p>
+    <a mat-stroked-button routerLink="/" class="flex items-center gap-2">
       <mat-icon>arrow_back</mat-icon>
       Back to Catalog
     </a>
   </div>
 } @else {
   @let framework = frameworkResource.value();
-  <div class="detail-container">
-    <a mat-button routerLink="/" class="back-link">
-      <mat-icon>arrow_back</mat-icon>
-      Back to Catalog
-    </a>
+  <div class="max-w-3xl mx-auto space-y-6 pb-12">
+    <!-- Back link & status -->
+    <div class="flex items-center justify-between">
+      <a routerLink="/" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+        <mat-icon class="text-lg w-5 h-5">arrow_back</mat-icon>
+        Back to Catalog
+      </a>
+      <div class="flex items-center gap-3">
+        @if (sseConnected()) {
+          <div class="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Live
+          </div>
+        }
+        @if (lastUpdated()) {
+          <span class="text-xs text-gray-400 flex items-center gap-1">
+            <mat-icon class="text-sm w-3.5 h-3.5">refresh</mat-icon>
+            {{ formatTimeAgo(lastUpdated()!) }}
+          </span>
+        }
+      </div>
+    </div>
 
-    <div class="status-bar">
-      @if (sseConnected()) {
-        <div class="live-indicator">
-          <span class="live-dot"></span>
-          <span>Live</span>
+    <!-- Framework Detail Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="h-2 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
+      <div class="p-6 sm:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ framework?.name }}</h1>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2"
+                  [class]="'bg-' + getTypeColor(framework?.type || '').replace('primary','blue').replace('accent','purple').replace('warn','orange') + '-50 text-' + getTypeColor(framework?.type || '').replace('primary','blue').replace('accent','purple').replace('warn','orange') + '-700'">
+              {{ framework?.type }}
+            </span>
+          </div>
         </div>
-      }
-      @if (lastUpdated()) {
-        <div class="last-updated">
-          <mat-icon class="update-icon">refresh</mat-icon>
-          <span>Updated {{ formatTimeAgo(lastUpdated()!) }}</span>
+
+        <div class="flex items-center gap-1 mb-6">
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <mat-icon class="text-2xl w-7 h-7"
+                      [class.text-amber-400]="star <= (framework?.averageRating || 0)"
+                      [class.text-gray-300]="star > (framework?.averageRating || 0)">
+              {{ star <= (framework?.averageRating || 0) ? 'star' : 'star_border' }}
+            </mat-icon>
+          }
+          <span class="ml-2 text-lg font-semibold text-gray-700">{{ framework?.averageRating }} / 5</span>
+          <span class="ml-2 text-sm text-gray-400">({{ framework?.reviewCount || 0 }} review{{ (framework?.reviewCount || 0) === 1 ? '' : 's' }})</span>
+        </div>
+
+        <div>
+          <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">About</h2>
+          <p class="text-gray-600 leading-relaxed">{{ framework?.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Write a Review</h2>
+      @if (!isLoggedIn()) {
+        <p class="text-gray-500">Please <a routerLink="/login" class="text-indigo-600 hover:text-indigo-700 font-medium">log in</a> to submit a review.</p>
+      } @else {
+        <div class="space-y-5">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700">Your Rating:</span>
+            <div class="flex items-center gap-1">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button type="button"
+                        class="p-1 transition-transform hover:scale-110"
+                        [class.text-amber-400]="star <= (hoveredRating() || rating())"
+                        [class.text-gray-300]="star > (hoveredRating() || rating())"
+                        (mouseenter)="setHoveredRating(star)"
+                        (mouseleave)="setHoveredRating(0)"
+                        (click)="setRating(star)"
+                        [disabled]="isSubmitting()">
+                  <mat-icon class="text-2xl w-7 h-7">{{ star <= (hoveredRating() || rating()) ? 'star' : 'star_border' }}</mat-icon>
+                </button>
+              }
+            </div>
+            @if (rating() > 0) {
+              <span class="text-sm font-medium text-gray-700 ml-1">{{ rating() }} / 5</span>
+            }
+          </div>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Your Review</mat-label>
+            <textarea matInput [(ngModel)]="comment" rows="4"
+                      placeholder="Share your experience with this technology..."
+                      maxlength="1000" [disabled]="isSubmitting()"></textarea>
+            <mat-hint align="end">{{ comment().length }} / 1000</mat-hint>
+          </mat-form-field>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Pros (optional)</mat-label>
+              <textarea matInput [(ngModel)]="pros" rows="2"
+                        placeholder="What do you like?"
+                        maxlength="500" [disabled]="isSubmitting()"></textarea>
+              <mat-hint align="end">{{ pros().length }} / 500</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Cons (optional)</mat-label>
+              <textarea matInput [(ngModel)]="cons" rows="2"
+                        placeholder="What could be improved?"
+                        maxlength="500" [disabled]="isSubmitting()"></textarea>
+              <mat-hint align="end">{{ cons().length }} / 500</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <button mat-raised-button color="primary"
+                  class="!h-11"
+                  (click)="submitReview()"
+                  [disabled]="isSubmitting() || rating() < 1 || comment().trim().length === 0">
+            <mat-icon [class.animate-spin]="isSubmitting()">{{ isSubmitting() ? 'refresh' : 'send' }}</mat-icon>
+            {{ isSubmitting() ? 'Submitting...' : 'Submit Review' }}
+          </button>
         </div>
       }
     </div>
 
-    <mat-card class="detail-card">
-      <mat-card-header>
-        <mat-card-title class="framework-name">{{ framework?.name }}</mat-card-title>
-        <mat-card-subtitle>
-          <mat-chip-set>
-            <mat-chip [color]="getTypeColor(framework?.type || '')" highlighted>
-              {{ framework?.type }}
-            </mat-chip>
-          </mat-chip-set>
-        </mat-card-subtitle>
-      </mat-card-header>
-
-      <mat-card-content>
-        <div class="rating-large">
-          @for (star of [1, 2, 3, 4, 5]; track star) {
-            <mat-icon [class.filled]="star <= (framework?.averageRating || 0)">
-              {{ star <= (framework?.averageRating || 0) ? 'star' : 'star_border' }}
-            </mat-icon>
-          }
-          <span class="rating-value">{{ framework?.averageRating }} / 5</span>
-          <span class="review-count">({{ framework?.reviewCount || 0 }} review{{ (framework?.reviewCount || 0) === 1 ? '' : 's' }})</span>
-        </div>
-
-        <div class="description-section">
-          <h3>About</h3>
-          <p class="description">{{ framework?.description }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="review-form-card">
-      <mat-card-header>
-        <mat-card-title>Write a Review</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if (!isLoggedIn()) {
-          <p>Please <a routerLink="/login">log in</a> to submit a review.</p>
-        } @else {
-          <div class="star-rating-input">
-            <span class="rating-label">Your Rating:</span>
-            @for (star of [1, 2, 3, 4, 5]; track star) {
-              <button
-                type="button"
-                class="star-btn"
-                [class.filled]="star <= (hoveredRating() || rating())"
-                (mouseenter)="setHoveredRating(star)"
-                (mouseleave)="setHoveredRating(0)"
-                (click)="setRating(star)"
-                [disabled]="isSubmitting()"
-              >
-                <mat-icon>
-                  {{ star <= (hoveredRating() || rating()) ? 'star' : 'star_border' }}
-                </mat-icon>
-              </button>
-            }
-            @if (rating() > 0) {
-              <span class="selected-rating">{{ rating() }} / 5</span>
-            }
-          </div>
-
-          <mat-form-field class="comment-field" appearance="outline">
-            <mat-label>Your Review</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="comment"
-              rows="4"
-              placeholder="Share your experience with this technology..."
-              maxlength="1000"
-              [disabled]="isSubmitting()"
-            ></textarea>
-            <mat-hint align="end">{{ comment().length }} / 1000</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field class="pros-field" appearance="outline">
-            <mat-label>Pros (optional)</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="pros"
-              rows="2"
-              placeholder="What do you like about this technology?"
-              maxlength="500"
-              [disabled]="isSubmitting()"
-            ></textarea>
-            <mat-hint align="end">{{ pros().length }} / 500</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field class="cons-field" appearance="outline">
-            <mat-label>Cons (optional)</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="cons"
-              rows="2"
-              placeholder="What could be improved?"
-              maxlength="500"
-              [disabled]="isSubmitting()"
-            ></textarea>
-            <mat-hint align="end">{{ cons().length }} / 500</mat-hint>
-          </mat-form-field>
-
-          <button
-            mat-raised-button
-            color="primary"
-            class="submit-btn"
-            (click)="submitReview()"
-            [disabled]="isSubmitting() || rating() < 1 || comment().trim().length === 0"
-          >
-            <mat-icon [class.spin]="isSubmitting()">
-              {{ isSubmitting() ? 'refresh' : 'send' }}
-            </mat-icon>
-            {{ isSubmitting() ? 'Submitting...' : 'Submit Review' }}
-          </button>
-        }
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="reviews-card">
-      <mat-card-header>
-        <mat-card-title>Reviews</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if (reviewsLoading()) {
-          <div class="reviews-loading">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          </div>
-        } @else if (reviewsError()) {
-          <p class="reviews-error">{{ reviewsError() }}</p>
-        } @else {
-          @let reviewList = reviews();
-          @if (reviewList && reviewList.length > 0) {
+    <!-- Reviews -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Reviews</h2>
+      @if (reviewsLoading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      } @else if (reviewsError()) {
+        <p class="text-red-600 text-center py-4">{{ reviewsError() }}</p>
+      } @else {
+        @let reviewList = reviews();
+        @if (reviewList && reviewList.length > 0) {
+          <div class="space-y-4">
             @for (review of reviewList; track review.id) {
-              <mat-card class="review-card">
-                <mat-card-header>
-                  <div mat-card-avatar class="review-avatar">
+              <div class="border border-gray-100 rounded-xl p-5 hover:shadow-sm transition-shadow">
+                <div class="flex items-start gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-sm font-semibold text-gray-600 shrink-0">
                     {{ getInitials(review.username) }}
                   </div>
-                  <mat-card-title>
-                    @if (review.username) {
-                      <span class="review-author">{{ review.username }}</span>
-                      @if (review.userId) {
-                        <mat-chip class="verified-badge" highlighted color="primary">Verified</mat-chip>
-                      }
-                    } @else {
-                      <span class="review-author anonymous">Anonymous</span>
-                    }
-                  </mat-card-title>
-                  <mat-card-subtitle>{{ formatDate(review.createdAt) }}</mat-card-subtitle>
-                </mat-card-header>
-
-                <mat-card-content>
-                  <div class="review-stars">
-                    @for (star of [1, 2, 3, 4, 5]; track star) {
-                      <mat-icon [class.filled]="star <= review.rating">
-                        {{ star <= review.rating ? 'star' : 'star_border' }}
-                      </mat-icon>
-                    }
-                  </div>
-
-                  <p class="review-comment">{{ review.comment }}</p>
-
-                  @if (review.pros || review.cons) {
-                    <div class="structured-feedback">
-                      @if (review.pros) {
-                        <div class="pros-section">
-                          <strong><mat-icon class="pros-icon">thumb_up</mat-icon> Pros</strong>
-                          <p>{{ review.pros }}</p>
-                        </div>
-                      }
-                      @if (review.cons) {
-                        <div class="cons-section">
-                          <strong><mat-icon class="cons-icon">thumb_down</mat-icon> Cons</strong>
-                          <p>{{ review.cons }}</p>
-                        </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      @if (review.username) {
+                        <span class="font-semibold text-gray-900">{{ review.username }}</span>
+                        @if (review.userId) {
+                          <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Verified</span>
+                        }
+                      } @else {
+                        <span class="font-semibold text-gray-400 italic">Anonymous</span>
                       }
                     </div>
-                  }
+                    <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(review.createdAt) }}</p>
+                  </div>
+                </div>
 
-                  <div class="review-actions">
-                    <button mat-button (click)="voteReview(review.id, 'UPVOTE')">
-                      <mat-icon>thumb_up</mat-icon>
-                      Helpful ({{ review.helpfulVotes || 0 }})
-                    </button>
-                    <button mat-button (click)="voteReview(review.id, 'DOWNVOTE')">
-                      <mat-icon>thumb_down</mat-icon>
-                      Not Helpful ({{ review.notHelpfulVotes || 0 }})
-                    </button>
-                    @if (canEditReview(review)) {
-                      <button mat-icon-button color="warn" (click)="deleteReview(review.id)" title="Delete review">
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                <div class="flex items-center gap-0.5 mb-3">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <mat-icon class="text-base w-4 h-4"
+                              [class.text-amber-400]="star <= review.rating"
+                              [class.text-gray-300]="star > review.rating">
+                      {{ star <= review.rating ? 'star' : 'star_border' }}
+                    </mat-icon>
+                  }
+                </div>
+
+                <p class="text-gray-700 text-sm leading-relaxed mb-4">{{ review.comment }}</p>
+
+                @if (review.pros || review.cons) {
+                  <div class="space-y-2 mb-4">
+                    @if (review.pros) {
+                      <div class="bg-green-50 rounded-lg p-3">
+                        <div class="flex items-center gap-1.5 text-green-700 text-sm font-semibold mb-1">
+                          <mat-icon class="text-base w-4 h-4">thumb_up</mat-icon>
+                          Pros
+                        </div>
+                        <p class="text-green-800 text-sm pl-5">{{ review.pros }}</p>
+                      </div>
+                    }
+                    @if (review.cons) {
+                      <div class="bg-red-50 rounded-lg p-3">
+                        <div class="flex items-center gap-1.5 text-red-700 text-sm font-semibold mb-1">
+                          <mat-icon class="text-base w-4 h-4">thumb_down</mat-icon>
+                          Cons
+                        </div>
+                        <p class="text-red-800 text-sm pl-5">{{ review.cons }}</p>
+                      </div>
                     }
                   </div>
-                </mat-card-content>
-              </mat-card>
-            }
+                }
 
-            @if (totalPages() > 1) {
-              <div class="pagination-controls">
-                <button mat-stroked-button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
-                  <mat-icon>chevron_left</mat-icon> Previous
-                </button>
-                <span class="page-info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
-                <button mat-stroked-button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">
-                  Next <mat-icon>chevron_right</mat-icon>
-                </button>
+                <div class="flex items-center gap-2">
+                  <button mat-button (click)="voteReview(review.id, 'UPVOTE')" class="text-gray-500">
+                    <mat-icon class="text-base w-4 h-4">thumb_up</mat-icon>
+                    Helpful ({{ review.helpfulVotes || 0 }})
+                  </button>
+                  <button mat-button (click)="voteReview(review.id, 'DOWNVOTE')" class="text-gray-500">
+                    <mat-icon class="text-base w-4 h-4">thumb_down</mat-icon>
+                    Not Helpful ({{ review.notHelpfulVotes || 0 }})
+                  </button>
+                  @if (canEditReview(review)) {
+                    <button mat-icon-button color="warn" (click)="deleteReview(review.id)" title="Delete review">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
               </div>
             }
-          } @else {
-            <p class="no-reviews">No reviews yet. Be the first to share your thoughts!</p>
+          </div>
+
+          @if (totalPages() > 1) {
+            <div class="flex items-center justify-center gap-4 mt-6">
+              <button mat-stroked-button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
+                <mat-icon>chevron_left</mat-icon> Previous
+              </button>
+              <span class="text-sm text-gray-600">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+              <button mat-stroked-button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">
+                Next <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
           }
+        } @else {
+          <div class="text-center py-12">
+            <mat-icon class="text-5xl w-12 h-12 text-gray-300 mb-3">rate_review</mat-icon>
+            <p class="text-gray-500">No reviews yet. Be the first to share your thoughts!</p>
+          </div>
         }
-      </mat-card-content>
-    </mat-card>
+      }
+    </div>
   </div>
 }

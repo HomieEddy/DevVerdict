@@ -1,37 +1,59 @@
-<div class="profile-container">
-  <mat-card *ngIf="user() as u">
-    <mat-card-header>
-      <mat-card-title>{{ u.username }}</mat-card-title>
-      <mat-card-subtitle>{{ u.email }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p><strong>Role:</strong> {{ u.role }}</p>
-    </mat-card-content>
-  </mat-card>
-
-  <h2>My Reviews</h2>
-
-  <div *ngIf="reviewsResource() as reviewsRes">
-    <mat-card *ngIf="reviewsRes.value() as reviews">
-      <mat-list *ngIf="reviews.length > 0; else noReviews">
-        <div *ngFor="let review of reviews; let last = last">
-          <mat-list-item>
-            <mat-icon matListIcon>star</mat-icon>
-            <div matLine>
-              <strong>Rating:</strong> {{ review.rating }}/5
-            </div>
-            <div matLine>{{ review.comment }}</div>
-            <div matLine class="review-date">{{ review.createdAt | date:'medium' }}</div>
-          </mat-list-item>
-          <mat-divider *ngIf="!last"></mat-divider>
+<div class="max-w-3xl mx-auto space-y-6 pb-12">
+  @let u = user();
+  @if (u) {
+    <!-- User Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white">
+          {{ u.username.charAt(0).toUpperCase() }}
         </div>
-      </mat-list>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">{{ u.username }}</h1>
+          <p class="text-gray-500">{{ u.email }}</p>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1"
+                [class]="u.role === 'ADMIN' ? 'bg-purple-50 text-purple-700' : 'bg-gray-50 text-gray-600'">
+            {{ u.role }}
+          </span>
+        </div>
+      </div>
+    </div>
 
-      <ng-template #noReviews>
-        <mat-card-content>
-          <p>No reviews yet.</p>
-        </mat-card-content>
-      </ng-template>
-    </mat-card>
-  </div>
+    <!-- Reviews -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">My Reviews</h2>
+      @let reviewsRes = reviewsResource();
+      @if (reviewsRes) {
+        @let reviews = reviewsRes.value();
+        @if (reviews && reviews.length > 0) {
+          <div class="space-y-3">
+            @for (review of reviews; track review.id; let last = $last) {
+              <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-0.5 shrink-0">
+                  @for (star of [1,2,3,4,5]; track star) {
+                    <mat-icon class="text-base w-4 h-4"
+                              [class.text-amber-400]="star <= review.rating"
+                              [class.text-gray-300]="star > review.rating">
+                      {{ star <= review.rating ? 'star' : 'star_border' }}
+                    </mat-icon>
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-700">{{ review.comment }}</p>
+                  <p class="text-xs text-gray-400 mt-1">{{ review.createdAt | date:'medium' }}</p>
+                </div>
+              </div>
+              @if (!last) {
+                <div class="border-t border-gray-100"></div>
+              }
+            }
+          </div>
+        } @else {
+          <div class="text-center py-8">
+            <mat-icon class="text-4xl w-10 h-10 text-gray-300 mb-2">rate_review</mat-icon>
+            <p class="text-gray-500">No reviews yet.</p>
+          </div>
+        }
+      }
+    </div>
+  }
 </div>
